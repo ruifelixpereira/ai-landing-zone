@@ -10,6 +10,6 @@ vnet_name                      = "ai-lz-vnet"
 vnet_address_space             = "192.168.0.0/23"
 
 # Platform LZ Hub resources
-existing_zones_resource_group_resource_id = "/subscriptions/111111-111-11111-1111/resourceGroups/rg-plat-lz"
-existing_hub_virtual_network_resource_id = "/subscriptions/111111-111-11111-1111/resourceGroups/rg-plat-lz/providers/Microsoft.Network/virtualNetworks/rg-cvex-hub-example-vnet"
-existing_hub_firewall_ip_address = "10.10.0.132"
+#existing_zones_resource_group_resource_id = "/subscriptions/111111-111-11111-1111/resourceGroups/rg-plat-lz"
+#existing_hub_virtual_network_resource_id = "/subscriptions/111111-111-11111-1111/resourceGroups/rg-plat-lz/providers/Microsoft.Network/virtualNetworks/rg-cvex-hub-example-vnet"
+#existing_hub_firewall_ip_address = "10.10.0.132"
