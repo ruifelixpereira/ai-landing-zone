@@ -67,3 +67,40 @@ variable "tags" {
   default     = null
   description = "(Optional) Tags of the resource."
 }
+
+# ==========================================
+# Feature Flags
+# ==========================================
+
+variable "enabled_features" {
+  type        = set(string)
+  default     = ["container_app_environment", "container_registry", "genai_cosmosdb", "genai_keyvault", "genai_storage_account", "genai_app_configuration", "ai_search", "bing_grounding"]
+  description = <<DESCRIPTION
+Set of features to enable. Valid values:
+- apim: Azure API Management
+- app_gateway: Azure Application Gateway
+- bastion: Azure Bastion
+- container_app_environment: Azure Container App Environment
+- container_registry: Azure Container Registry for GenAI
+- genai_cosmosdb: Azure Cosmos DB for GenAI
+- genai_storage_account: Azure Storage Account for GenAI
+- genai_keyvault: Azure Key Vault for GenAI
+- genai_app_configuration: Azure App Configuration for GenAI
+- ai_search: Azure AI Search for knowledge store
+- bing_grounding: Bing Grounding service
+- build_vm: Build VM
+- jump_vm: Jump VM
+DESCRIPTION
+
+  validation {
+    condition = alltrue([
+      for f in var.enabled_features : contains([
+        "apim", "app_gateway", "bastion", "container_app_environment",
+        "container_registry", "genai_cosmosdb", "genai_storage_account",
+        "genai_keyvault", "genai_app_configuration", "ai_search", "bing_grounding",
+        "build_vm", "jump_vm"
+      ], f)
+    ])
+    error_message = "Invalid feature name. See variable description for valid values."
+  }
+}

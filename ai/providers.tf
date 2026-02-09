@@ -18,3 +18,7 @@ provider "azurerm" {
   # - Managed Identity: When running in Azure
   # subscription_id = var.subscription_id
 }
+
+provider "azapi" {
+  # Uses the same authentication as azurerm
+}

@@ -13,4 +13,8 @@ module "ai_landing_zone" {
   existing_zones_resource_group_resource_id = var.existing_zones_resource_group_resource_id
   existing_hub_firewall_ip_address = var.existing_hub_firewall_ip_address
   existing_hub_virtual_network_resource_id = var.existing_hub_virtual_network_resource_id
+  tags = var.tags
+
+  # Feature Flags
+  enabled_features = var.enabled_features
 }

@@ -30,6 +30,17 @@ module "vnet" {
   name          = var.vnet_name
 }
 
+module "nsg" {
+  source = "Azure/avm-res-network-networksecuritygroup/azurerm"
+  version = "0.5.1"
+
+  location            = azurerm_resource_group.vnet_rg.location
+  name                = module.naming.network_security_group.name_unique
+  resource_group_name = azurerm_resource_group.vnet_rg.name
+  security_rules      = local.apim_subnet_nsg_rules
+  tags                = var.tags
+}
+
 module "ai_landing_zone" {
   source  = "Azure/avm-ptn-aiml-landing-zone/azurerm"
   version = "0.3.0"
@@ -123,7 +134,7 @@ module "ai_landing_zone" {
   }
   
   apim_definition = {
-    deploy          = true
+    deploy          = false # contains(var.enabled_features, "apim")
     sku_root        = local.apim_sku_root
     sku_capacity    = local.apim_sku_capacity
     publisher_email = "DoNotReply@exampleEmail.com"
@@ -132,7 +143,7 @@ module "ai_landing_zone" {
   }
 
   app_gateway_definition = {
-    deploy = false
+    deploy = contains(var.enabled_features, "app_gateway")
     
     backend_address_pools = {
       example_pool = {
@@ -175,7 +186,7 @@ module "ai_landing_zone" {
   }
   
   bastion_definition = {
-    deploy = false
+    deploy = contains(var.enabled_features, "bastion")
     sku    = local.bastion_sku
     zones  = local.bastion_zones
   }
@@ -185,7 +196,7 @@ module "ai_landing_zone" {
   }
   
   container_app_environment_definition = {
-    deploy = true
+    deploy = contains(var.enabled_features, "container_app_environment")
     zone_redundancy_enabled = true
     enable_diagnostic_settings = false
   }
@@ -194,18 +205,19 @@ module "ai_landing_zone" {
   flag_platform_landing_zone = false
   
   genai_container_registry_definition = {
-    deploy = true
+    deploy = contains(var.enabled_features, "container_registry")
     sku = local.container_registry_sku
     zone_redundancy_enabled = local.container_registry_zone_redundancy_enabled
     enable_diagnostic_settings = false
   }
 
   genai_cosmosdb_definition = {
-    deploy = true
+    deploy = contains(var.enabled_features, "genai_cosmosdb")
     enable_diagnostic_settings = false
   }
   
   genai_key_vault_definition = {
+    deploy = contains(var.enabled_features, "genai_keyvault")
     #this is for AVM testing purposes only. Doing this as we don't have an easy for the test runner to be privately connected for testing.
     public_network_access_enabled = true
     network_acls = {
@@ -215,18 +227,18 @@ module "ai_landing_zone" {
   }
   
   genai_storage_account_definition = {
-    deploy                   = true
+    deploy                   = contains(var.enabled_features, "genai_storage_account")
     account_replication_type = local.genai_storage_account_replication_type
     enable_diagnostic_settings = false
   }
 
   genai_app_configuration_definition = {
-    deploy = true
+    deploy = contains(var.enabled_features, "genai_app_configuration")
     enable_diagnostic_settings = false
   }
   
   ks_ai_search_definition = {
-    deploy                     = true
+    deploy                     = contains(var.enabled_features, "ai_search")
     sku                        = local.ai_search_sku
     replica_count              = local.ai_search_replica_count
     semantic_search_sku        = local.ai_search_semantic_sku
@@ -234,16 +246,16 @@ module "ai_landing_zone" {
   }
 
   ks_bing_grounding_definition = {
-    deploy = true
+    deploy = contains(var.enabled_features, "bing_grounding")
     sku    = local.bing_grounding_sku
   }
 
   buildvm_definition = {
-    deploy = false
+    deploy = contains(var.enabled_features, "build_vm")
   }
 
   jumpvm_definition = {
-    deploy = false
+    deploy = contains(var.enabled_features, "jump_vm")
   }
   
   private_dns_zones = {
@@ -251,3 +263,32 @@ module "ai_landing_zone" {
     existing_zones_resource_group_resource_id = var.existing_zones_resource_group_resource_id
   }
 }
+
+/*
+# Update APIM subnet with delegation
+resource "azapi_update_resource" "apim_subnet_delegation" {
+  type        = "Microsoft.Network/virtualNetworks/subnets@2024-01-01"
+  resource_id = module.ai_landing_zone.subnets["APIMSubnet"].resource_id
+
+  body = {
+    properties = {
+      addressPrefix = module.ai_landing_zone.subnets["APIMSubnet"].address_prefixes[0]
+      delegations = [
+        {
+          name = "Microsoft.Web.serverFarms"
+          properties = {
+            serviceName = "Microsoft.Web/serverFarms"
+          }
+        }
+      ]
+    }
+  }
+}
+
+resource "azurerm_subnet_network_security_group_association" "apim" {
+  subnet_id                 = module.ai_landing_zone.subnets["APIMSubnet"].resource_id
+  network_security_group_id = module.nsg.resource_id
+
+  depends_on = [azapi_update_resource.apim_subnet_delegation]
+}
+*/
