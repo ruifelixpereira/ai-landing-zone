@@ -1,0 +1,33 @@
+version: 3
+automerge: false
+delete_source_branch_on_merge: true
+parallel_plan: true
+parallel_apply: false
+
+projects:
+
+  - name: "ai-lz"
+    dir: ./ai
+    workspace: "ai-landing-zone"
+    terraform_version: v1.9.0
+    autoplan:
+      when_modified:
+        - "*.yml"
+        - "*.yaml"
+        - "*.tf"
+        - "*.tfvars"
+        - "./modules/ai-lz*/*.tf"
+      enabled: true
+
+  - name: "policies"
+    dir: ./policies
+    workspace: "policies"
+    terraform_version: v1.9.0
+    autoplan:
+      when_modified:
+        - "*.yml"
+        - "*.yaml"
+        - "*.tf"
+        - "*.tfvars"
+        - "./modules/private-dns-zone-policies/*.tf"
+      enabled: true

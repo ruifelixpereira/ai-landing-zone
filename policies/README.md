@@ -1,0 +1,1 @@
+# Azure Policy that automates registration in Private DNS Zones for Private Endpoints

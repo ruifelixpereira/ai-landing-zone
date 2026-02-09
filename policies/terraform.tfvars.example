@@ -1,0 +1,6 @@
+# Example terraform.tfvars file
+# Copy this file to terraform.tfvars and customize values
+
+location                    = "SwedenCentral"
+management_group_id         = "/providers/Microsoft.Management/managementGroups/all_subscriptions"
+dns_zones_resource_group_id = "/subscriptions/111-1-11111-111-1111/resourceGroups/rg-plat-dns"
