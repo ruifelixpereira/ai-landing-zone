@@ -8,7 +8,7 @@ locals {
   # dev -> Standard, qua -> Standard, prod -> Premium
   apim_sku_root     = var.environment == "prod" ? "PremiumV2" : "StandardV2"
   apim_sku_capacity = var.environment == "prod" ? 3 : 1
-  zones = var.environment == "prod" ? ["1", "2", "3"] : null
+  apim_zones        = var.environment == "prod" ? ["1", "2", "3"] : null
 
   # Bastion SKU and zones based on environment
   # dev -> Basic (no zones), qua -> Standard (zone 1), prod -> Standard (zones 1,2,3)
@@ -30,24 +30,24 @@ locals {
   bing_grounding_sku = "G1"
 
   apim_subnet_nsg_rules = {
-    "rule01" = {
+    "apim_rule01" = {
       name                       = "KeyVault_Outbound"
       access                     = "Allow"
       destination_address_prefix = "AzureKeyVault"
       destination_port_range     = "443"
       direction                  = "Outbound"
-      priority                   = 100
+      priority                   = 200
       protocol                   = "*"
       source_address_prefix      = "*"
       source_port_range          = "*"
     }
-    "rule02" = {
+    "apim_rule02" = {
       name                       = "Storage_Outbound"
       access                     = "Allow"
       destination_address_prefix = "Storage"
       destination_port_range     = "443"
       direction                  = "Outbound"
-      priority                   = 200
+      priority                   = 201
       protocol                   = "*"
       source_address_prefix      = "*"
       source_port_range          = "*"

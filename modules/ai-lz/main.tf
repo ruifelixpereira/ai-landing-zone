@@ -30,17 +30,6 @@ module "vnet" {
   name          = var.vnet_name
 }
 
-module "nsg" {
-  source = "Azure/avm-res-network-networksecuritygroup/azurerm"
-  version = "0.5.1"
-
-  location            = azurerm_resource_group.vnet_rg.location
-  name                = module.naming.network_security_group.name_unique
-  resource_group_name = azurerm_resource_group.vnet_rg.name
-  security_rules      = local.apim_subnet_nsg_rules
-  tags                = var.tags
-}
-
 module "ai_landing_zone" {
   source  = "Azure/avm-ptn-aiml-landing-zone/azurerm"
   version = "0.3.0"
@@ -64,6 +53,7 @@ module "ai_landing_zone" {
 
   nsgs_definition = {
     resource_group_name = var.networking_resource_group_name
+    security_rules = local.apim_subnet_nsg_rules
   }
 
   ai_foundry_definition = {
@@ -264,19 +254,28 @@ module "ai_landing_zone" {
   }
 }
 
-/*
+# Get APIM Subnet details to add delegation
+data "azurerm_subnet" "apim_subnet" {
+  name                 = "APIMSubnet"
+  virtual_network_name = module.vnet.name
+  resource_group_name  = azurerm_resource_group.vnet_rg.name
+
+  depends_on = [module.ai_landing_zone]
+}
+
+
 # Update APIM subnet with delegation
 resource "azapi_update_resource" "apim_subnet_delegation" {
   type        = "Microsoft.Network/virtualNetworks/subnets@2024-01-01"
-  resource_id = module.ai_landing_zone.subnets["APIMSubnet"].resource_id
+  resource_id = data.azurerm_subnet.apim_subnet.id
 
   body = {
-    properties = {
-      addressPrefix = module.ai_landing_zone.subnets["APIMSubnet"].address_prefixes[0]
+     properties = {
       delegations = [
         {
           name = "Microsoft.Web.serverFarms"
           properties = {
+            actions     = ["Microsoft.Network/virtualNetworks/subnets/action"]
             serviceName = "Microsoft.Web/serverFarms"
           }
         }
@@ -285,10 +284,41 @@ resource "azapi_update_resource" "apim_subnet_delegation" {
   }
 }
 
-resource "azurerm_subnet_network_security_group_association" "apim" {
-  subnet_id                 = module.ai_landing_zone.subnets["APIMSubnet"].resource_id
-  network_security_group_id = module.nsg.resource_id
+# Get APIM Subnet details to add delegation
+data "azurerm_subnet" "private_endpoints_subnet" {
+  name                 = "PrivateEndpointSubnet"
+  virtual_network_name = module.vnet.name
+  resource_group_name  = azurerm_resource_group.vnet_rg.name
+
+  depends_on = [module.ai_landing_zone]
+}
+
+# Deploy APIM with delegation to APIM subnet
+module "apim" {
+  source = "../apim"
+
+  resource_group_name = var.ai_resource_group_name
+
+  apim_definition = {
+    deploy           = contains(var.enabled_features, "apim")
+    location         = var.location
+    name             = module.naming.api_management.name_unique
+    sku_root         = local.apim_sku_root
+    sku_capacity     = local.apim_sku_capacity
+    publisher_email  = "DoNotReply@exampleEmail.com"
+    publisher_name   = "Azure API Management"
+    enable_diagnostic_settings = false
+    tags             = var.tags     
+    enable_telemetry = var.enable_telemetry
+  }
+
+  network_configuration = {
+    private_endpoint_subnet_id = data.azurerm_subnet.private_endpoints_subnet.id
+    virtual_network_subnet_id  = data.azurerm_subnet.apim_subnet.id
+    virtual_network_type       = "External" # "None", "External", "Internal"
+  }
+
+  zones = local.apim_zones
 
   depends_on = [azapi_update_resource.apim_subnet_delegation]
 }
-*/

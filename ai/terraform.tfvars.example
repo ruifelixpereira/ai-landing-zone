@@ -15,7 +15,7 @@ vnet_address_space             = "192.168.0.0/23"
 #existing_hub_firewall_ip_address = "10.10.0.132"
 
 # Feature flags
-#enabled_features = ["container_app_environment", "container_registry", "genai_cosmosdb", "genai_keyvault", "genai_storage_account", "genai_app_configuration", "ai_search", "bing_grounding"]
+#enabled_features = ["apim", "container_app_environment", "container_registry", "genai_cosmosdb", "genai_keyvault", "genai_storage_account", "genai_app_configuration", "ai_search", "bing_grounding"]
 enabled_features = []
 
 tags = {
