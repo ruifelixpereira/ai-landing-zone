@@ -2,7 +2,7 @@
 # This configuration calls the ai-lz module for testing purposes
 
 module "ai_landing_zone" {
-  source = "../modules/ai-lz"
+  source = "../../modules/ai-lz"
   ai_resource_group_name = var.ai_resource_group_name
   networking_resource_group_name = var.networking_resource_group_name
   location            = var.location
