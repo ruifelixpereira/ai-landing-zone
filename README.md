@@ -53,17 +53,64 @@ This repository includes two GitHub Actions workflows for automated Terraform de
 | Deploy AI Landing Zone | `.github/workflows/deploy-ai-lz.yml` | `solutions/ai/` |
 | Deploy Policies | `.github/workflows/deploy-policies.yml` | `solutions/policies/` |
 
-### Required Secrets
+### GitHub Environments Setup
 
-Configure the following secrets in your GitHub repository using environments (**Settings > Secrets and variables > Actions**):
+This repository uses GitHub environments for deployment protection and environment-specific secrets. **You must create the environments before running any workflow.**
+
+#### Creating Environments
+
+1. Go to **Settings > Environments**
+2. Create three environments: `dev`, `qua`, `prod`
+3. For each environment, add the required secrets (see below)
+
+#### Required Secrets (Per Environment)
+
+Secrets must be created at the **environment level**, not the repository level. For each environment (`dev`, `qua`, `prod`):
+
+1. Go to **Settings > Environments > [environment name]**
+2. Click **Add secret** and create the following:
 
 | Secret | Description |
 |--------|-------------|
 | `ARM_CLIENT_ID` | Azure Service Principal Application (client) ID |
-| `ARM_SUBSCRIPTION_ID` | Azure Subscription ID for deployment |
+| `ARM_SUBSCRIPTION_ID` | Azure Subscription ID for this environment |
 | `ARM_TENANT_ID` | Azure AD Tenant ID |
+| `TFVARS` | (Optional) Terraform variables in HCL format |
 
 > **Note:** `ARM_CLIENT_SECRET` is NOT required when using OIDC federation (recommended).
+
+This allows you to:
+- Deploy to different Azure subscriptions per environment
+- Use different Terraform configurations per environment
+- Use separate Service Principals with appropriate permissions
+
+#### Using TFVARS Secret
+
+Instead of committing `terraform.tfvars` to the repository, store your Terraform variables as a GitHub secret at the environment level. The workflow will automatically create `terraform.tfvars` from this secret if it's defined.
+
+**Setting up TFVARS for each environment:**
+
+1. Go to **Settings > Environments > [environment name]** (e.g., `dev`)
+2. Click **Add secret**
+3. Name: `TFVARS`
+4. Value: Paste your variables in HCL format:
+
+```hcl
+ai_resource_group_name         = "rg-ai-dev"
+networking_resource_group_name = "rg-ai-networking-dev"
+location                       = "Sweden Central"
+name_prefix                    = "myorg"
+vnet_name                      = "ai-lz-vnet-dev"
+vnet_address_space             = "192.168.0.0/23"
+enabled_features               = ["apim"]
+
+tags = {
+  environment = "dev"
+  project     = "ai-platform"
+}
+```
+
+Repeat for `qua` and `prod` environments with appropriate values (different resource groups, VNet address spaces, etc.).
 
 #### Setting up OIDC Federation (Recommended)
 
@@ -150,11 +197,7 @@ The selected environment is passed to Terraform as `TF_VAR_environment`, which c
 
 ### Environment Protection (Recommended)
 
-Workflows use GitHub environments for deployment protection. Create three environments:
-
-1. Go to **Settings > Environments**
-2. Create environments: `dev`, `qua`, `prod`
-3. Configure protection rules per environment:
+Configure protection rules for each environment:
 
 | Environment | Recommended Protection |
 |-------------|------------------------|
