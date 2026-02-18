@@ -96,6 +96,7 @@ Instead of committing `terraform.tfvars` to the repository, store your Terraform
 4. Value: Paste your variables in HCL format:
 
 ```hcl
+name_prefix                    = "xpto"
 ai_resource_group_name         = "rg-ai-dev"
 networking_resource_group_name = "rg-ai-networking-dev"
 location                       = "Sweden Central"
