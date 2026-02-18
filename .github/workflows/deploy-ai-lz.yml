@@ -37,7 +37,7 @@ on:
           - destroy
 
 env:
-  TF_VERSION: '1.9.0'
+  TF_VERSION: '1.12.2'
   WORKING_DIR: 'solutions/ai'
   ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
   ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
