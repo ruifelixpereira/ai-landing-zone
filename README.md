@@ -193,9 +193,9 @@ name_prefix                    = "xpto"
 ai_resource_group_name         = "rg-ai-dev"
 networking_resource_group_name = "rg-ai-networking-dev"
 location                       = "Sweden Central"
-name_prefix                    = "myorg"
 vnet_name                      = "ai-lz-vnet-dev"
 vnet_address_space             = "192.168.0.0/23"
+enable_telemetry               = false
 enabled_features               = ["apim"]
 
 tags = {
