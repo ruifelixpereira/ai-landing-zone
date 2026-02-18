@@ -112,7 +112,7 @@ locals {
     # Cognitive Services / OpenAI / AI Services
     # A single private endpoint with group_id "account" needs records in ALL THREE zones
     account = {
-      group_id       = "account"
+      group_id = "account"
       dns_zone_names = [
         "privatelink.cognitiveservices.azure.com",
         "privatelink.openai.azure.com",

@@ -1,22 +1,23 @@
 # Example terraform.tfvars file
 # Copy this file to terraform.tfvars and customize values
 
-ai_resource_group_name         = "rg-ai-core"
-networking_resource_group_name = "rg-ai-networking"
+ai_resource_group_name         = "rg-ai-core-9"
+networking_resource_group_name = "rg-ai-networking-9"
 location                       = "Sweden Central"
 environment                    = "dev"  # dev | qua | prod
+name_prefix                    = "rfp"
 enable_telemetry               = false
-vnet_name                      = "ai-lz-vnet"
+vnet_name                      = "ai-lz-vnet-9"
 vnet_address_space             = "192.168.0.0/23"
 
 # Platform LZ Hub resources
-#existing_zones_resource_group_resource_id = "/subscriptions/111111-111-11111-1111/resourceGroups/rg-plat-lz"
-#existing_hub_virtual_network_resource_id = "/subscriptions/111111-111-11111-1111/resourceGroups/rg-plat-lz/providers/Microsoft.Network/virtualNetworks/rg-cvex-hub-example-vnet"
+#existing_zones_resource_group_resource_id = "/subscriptions/f42687d4-5f50-4f38-956b-7fcfa755ff58/resourceGroups/rg-plat-lz-2"
+#existing_hub_virtual_network_resource_id = "/subscriptions/f42687d4-5f50-4f38-956b-7fcfa755ff58/resourceGroups/rg-plat-lz-2/providers/Microsoft.Network/virtualNetworks/rg-idyf-hub-vnet"
 #existing_hub_firewall_ip_address = "10.10.0.132"
 
 # Feature flags
 #enabled_features = ["apim", "container_app_environment", "container_registry", "genai_cosmosdb", "genai_keyvault", "genai_storage_account", "genai_app_configuration", "ai_search", "bing_grounding"]
-enabled_features = []
+enabled_features = ["apim"]
 
 tags = {
     environment = "test"

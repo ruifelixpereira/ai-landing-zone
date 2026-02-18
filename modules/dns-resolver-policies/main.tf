@@ -170,7 +170,7 @@ resource "azurerm_policy_definition" "dns_forwarding_rule" {
                   apiVersion = "2022-07-01"
                   name       = "[concat(variables('rulesetName'), '/', variables('ruleName'))]"
                   properties = {
-                    domainName        = "[concat(parameters('zoneName'), '.')]"
+                    domainName          = "[concat(parameters('zoneName'), '.')]"
                     forwardingRuleState = "Enabled"
                     targetDnsServers = [
                       {

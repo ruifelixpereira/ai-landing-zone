@@ -10,11 +10,11 @@ variable "location" {
 }
 
 variable "network_configuration" {
-    type = object({
-        private_endpoint_subnet_id = optional(string, null)
-        virtual_network_subnet_id  = optional(string, null)
-        virtual_network_type       = optional(string, "None")
-    })
+  type = object({
+    private_endpoint_subnet_id = optional(string, null)
+    virtual_network_subnet_id  = optional(string, null)
+    virtual_network_type       = optional(string, "None")
+  })
 }
 
 variable "zones" {

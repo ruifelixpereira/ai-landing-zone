@@ -1,20 +1,20 @@
 name: Deploy Policies
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'solutions/policies/**'
-      - 'modules/private-dns-zone-policies/**'
-      - 'modules/private-dns-resolver-policies/**'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'solutions/policies/**'
-      - 'modules/private-dns-zone-policies/**'
-      - 'modules/private-dns-resolver-policies/**'
+  #push:
+  #  branches:
+  #    - main
+  #  paths:
+  #    - 'solutions/policies/**'
+  #    - 'modules/private-dns-zone-policies/**'
+  #    - 'modules/private-dns-resolver-policies/**'
+  #pull_request:
+  #  branches:
+  #    - main
+  #  paths:
+  #    - 'solutions/policies/**'
+  #    - 'modules/private-dns-zone-policies/**'
+  #    - 'modules/private-dns-resolver-policies/**'
   workflow_dispatch:
     inputs:
       environment:
@@ -67,6 +67,13 @@ jobs:
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform fmt -check -recursive
 
+      - name: Create terraform.tfvars
+        if: ${{ env.TFVARS != '' }}
+        working-directory: ${{ env.WORKING_DIR }}
+        env:
+          TFVARS: ${{ secrets.TFVARS }}
+        run: echo "$TFVARS" > terraform.tfvars
+
       - name: Terraform Init
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform init -backend=false
@@ -89,6 +96,13 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Create terraform.tfvars
+        if: ${{ env.TFVARS != '' }}
+        working-directory: ${{ env.WORKING_DIR }}
+        env:
+          TFVARS: ${{ secrets.TFVARS }}
+        run: echo "$TFVARS" > terraform.tfvars
 
       - name: Terraform Init
         working-directory: ${{ env.WORKING_DIR }}
@@ -120,6 +134,13 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
+      - name: Create terraform.tfvars
+        if: ${{ env.TFVARS != '' }}
+        working-directory: ${{ env.WORKING_DIR }}
+        env:
+          TFVARS: ${{ secrets.TFVARS }}
+        run: echo "$TFVARS" > terraform.tfvars
+
       - name: Terraform Init
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform init
@@ -146,6 +167,13 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Create terraform.tfvars
+        if: ${{ env.TFVARS != '' }}
+        working-directory: ${{ env.WORKING_DIR }}
+        env:
+          TFVARS: ${{ secrets.TFVARS }}
+        run: echo "$TFVARS" > terraform.tfvars
 
       - name: Terraform Init
         working-directory: ${{ env.WORKING_DIR }}

@@ -108,12 +108,12 @@ module "private_dns_policies" {
 module "dns_resolver_policies" {
   source = "../../modules/dns-resolver-policies"
 
-  dns_zones_resource_group_name              = local.dns_zones_resource_group_name
-  dns_forwarding_ruleset_resource_id         = var.dns_forwarding_ruleset_resource_id
-  dns_resolver_resource_id                   = var.dns_resolver_resource_id
-  dns_resolver_inbound_endpoint_name        = var.dns_resolver_inbound_endpoint_name
-  management_group_id                        = var.management_group_id
-  location                                   = var.location
-  tags                                       = var.tags
-  create_policy                              = true
+  dns_zones_resource_group_name      = local.dns_zones_resource_group_name
+  dns_forwarding_ruleset_resource_id = var.dns_forwarding_ruleset_resource_id
+  dns_resolver_resource_id           = var.dns_resolver_resource_id
+  dns_resolver_inbound_endpoint_name = var.dns_resolver_inbound_endpoint_name
+  management_group_id                = var.management_group_id
+  location                           = var.location
+  tags                               = var.tags
+  create_policy                      = true
 }

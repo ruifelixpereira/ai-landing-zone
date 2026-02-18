@@ -40,10 +40,10 @@ module "ai_landing_zone" {
   vnet_definition = {
     existing_byo_vnet = {
       this_vnet = {
-        vnet_resource_id = module.vnet.resource_id
-        firewall_ip_address   = var.existing_hub_firewall_ip_address
+        vnet_resource_id    = module.vnet.resource_id
+        firewall_ip_address = var.existing_hub_firewall_ip_address
       }
-      
+
     }
     vnet_peering_configuration = {
       peer_vnet_resource_id = var.existing_hub_virtual_network_resource_id
@@ -53,13 +53,13 @@ module "ai_landing_zone" {
 
   nsgs_definition = {
     resource_group_name = var.networking_resource_group_name
-    security_rules = local.apim_subnet_nsg_rules
+    security_rules      = local.apim_subnet_nsg_rules
   }
 
   ai_foundry_definition = {
     purge_on_destroy = true
     ai_foundry = {
-      create_ai_agent_service = true
+      create_ai_agent_service    = true
       enable_diagnostic_settings = false
     }
     ai_model_deployments = {
@@ -122,19 +122,19 @@ module "ai_landing_zone" {
       }
     }
   }
-  
+
   apim_definition = {
-    deploy          = false # contains(var.enabled_features, "apim")
-    sku_root        = local.apim_sku_root
-    sku_capacity    = local.apim_sku_capacity
-    publisher_email = "DoNotReply@exampleEmail.com"
-    publisher_name  = "Azure API Management"
+    deploy                     = false # contains(var.enabled_features, "apim")
+    sku_root                   = local.apim_sku_root
+    sku_capacity               = local.apim_sku_capacity
+    publisher_email            = "DoNotReply@exampleEmail.com"
+    publisher_name             = "Azure API Management"
     enable_diagnostic_settings = false
   }
 
   app_gateway_definition = {
     deploy = contains(var.enabled_features, "app_gateway")
-    
+
     backend_address_pools = {
       example_pool = {
         name = "example-backend-pool"
@@ -174,7 +174,7 @@ module "ai_landing_zone" {
       }
     }
   }
-  
+
   bastion_definition = {
     deploy = contains(var.enabled_features, "bastion")
     sku    = local.bastion_sku
@@ -184,28 +184,28 @@ module "ai_landing_zone" {
   firewall_definition = {
     resource_group_name = var.networking_resource_group_name
   }
-  
+
   container_app_environment_definition = {
-    deploy = contains(var.enabled_features, "container_app_environment")
-    zone_redundancy_enabled = true
+    deploy                     = contains(var.enabled_features, "container_app_environment")
+    zone_redundancy_enabled    = true
     enable_diagnostic_settings = false
   }
-  
+
   enable_telemetry           = var.enable_telemetry
   flag_platform_landing_zone = false
-  
+
   genai_container_registry_definition = {
-    deploy = contains(var.enabled_features, "container_registry")
-    sku = local.container_registry_sku
-    zone_redundancy_enabled = local.container_registry_zone_redundancy_enabled
+    deploy                     = contains(var.enabled_features, "container_registry")
+    sku                        = local.container_registry_sku
+    zone_redundancy_enabled    = local.container_registry_zone_redundancy_enabled
     enable_diagnostic_settings = false
   }
 
   genai_cosmosdb_definition = {
-    deploy = contains(var.enabled_features, "genai_cosmosdb")
+    deploy                     = contains(var.enabled_features, "genai_cosmosdb")
     enable_diagnostic_settings = false
   }
-  
+
   genai_key_vault_definition = {
     deploy = contains(var.enabled_features, "genai_keyvault")
     #this is for AVM testing purposes only. Doing this as we don't have an easy for the test runner to be privately connected for testing.
@@ -215,18 +215,18 @@ module "ai_landing_zone" {
       ip_rules = ["${data.http.ip.response_body}/32"]
     }
   }
-  
+
   genai_storage_account_definition = {
-    deploy                   = contains(var.enabled_features, "genai_storage_account")
-    account_replication_type = local.genai_storage_account_replication_type
+    deploy                     = contains(var.enabled_features, "genai_storage_account")
+    account_replication_type   = local.genai_storage_account_replication_type
     enable_diagnostic_settings = false
   }
 
   genai_app_configuration_definition = {
-    deploy = contains(var.enabled_features, "genai_app_configuration")
+    deploy                     = contains(var.enabled_features, "genai_app_configuration")
     enable_diagnostic_settings = false
   }
-  
+
   ks_ai_search_definition = {
     deploy                     = contains(var.enabled_features, "ai_search")
     sku                        = local.ai_search_sku
@@ -247,7 +247,7 @@ module "ai_landing_zone" {
   jumpvm_definition = {
     deploy = contains(var.enabled_features, "jump_vm")
   }
-  
+
   private_dns_zones = {
     azure_policy_pe_zone_linking_enabled      = true
     existing_zones_resource_group_resource_id = var.existing_zones_resource_group_resource_id
@@ -270,7 +270,7 @@ resource "azapi_update_resource" "apim_subnet_delegation" {
   resource_id = data.azurerm_subnet.apim_subnet.id
 
   body = {
-     properties = {
+    properties = {
       delegations = [
         {
           name = "Microsoft.Web.serverFarms"
@@ -300,16 +300,16 @@ module "apim" {
   resource_group_name = var.ai_resource_group_name
 
   apim_definition = {
-    deploy           = contains(var.enabled_features, "apim")
-    location         = var.location
-    name             = module.naming.api_management.name_unique
-    sku_root         = local.apim_sku_root
-    sku_capacity     = local.apim_sku_capacity
-    publisher_email  = "DoNotReply@exampleEmail.com"
-    publisher_name   = "Azure API Management"
+    deploy                     = contains(var.enabled_features, "apim")
+    location                   = var.location
+    name                       = module.naming.api_management.name_unique
+    sku_root                   = local.apim_sku_root
+    sku_capacity               = local.apim_sku_capacity
+    publisher_email            = "DoNotReply@exampleEmail.com"
+    publisher_name             = "Azure API Management"
     enable_diagnostic_settings = false
-    tags             = var.tags     
-    enable_telemetry = var.enable_telemetry
+    tags                       = var.tags
+    enable_telemetry           = var.enable_telemetry
   }
 
   network_configuration = {

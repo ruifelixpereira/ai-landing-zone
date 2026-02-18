@@ -19,7 +19,7 @@ module "apim" {
   private_endpoints = {
     endpoint1 = {
       #private_dns_zone_resource_ids = var.private_dns_zones.azure_policy_pe_zone_linking_enabled ? null : (var.flag_platform_landing_zone ? [module.private_dns_zones.apim_zone.resource_id] : [local.private_dns_zones_existing.apim_zone.resource_id])
-      subnet_resource_id     = var.network_configuration.private_endpoint_subnet_id
+      subnet_resource_id = var.network_configuration.private_endpoint_subnet_id
     }
   }
   protocols                     = var.apim_definition.protocols
