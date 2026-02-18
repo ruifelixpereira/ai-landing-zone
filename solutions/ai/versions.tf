@@ -20,11 +20,14 @@ terraform {
     }
   }
 
-  # Uncomment and configure for remote state storage
-  # backend "azurerm" {
-  #   resource_group_name  = "tfstate-rg"
-  #   storage_account_name = "tfstateaccount"
-  #   container_name       = "tfstate"
-  #   key                  = "ai-lz-test.tfstate"
-  # }
+  # Configure remote state in Azure Storage
+  # Backend values are passed via -backend-config in CI/CD
+  # Or uncomment and hardcode values for local development
+  backend "azurerm" {
+    use_oidc = true
+    # resource_group_name  = "rg-tfstate"
+    # storage_account_name = "stterraformstate"
+    # container_name       = "tfstate"
+    # key                  = "ai-landing-zone/dev.tfstate"
+  }
 }
