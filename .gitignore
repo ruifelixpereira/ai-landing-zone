@@ -59,3 +59,8 @@ terraform.rc
 # Custom logs
 MYLOG.md
 zzMYLOG.md
+
+# Environment files with secrets
+scripts/.env
+.env
+!.env.example
