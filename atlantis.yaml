@@ -7,7 +7,7 @@ parallel_apply: false
 projects:
 
   - name: "ai-lz"
-    dir: ./ai
+    dir: ./solutions/ai
     workspace: "ai-landing-zone"
     terraform_version: v1.9.0
     autoplan:
@@ -20,7 +20,7 @@ projects:
       enabled: true
 
   - name: "policies"
-    dir: ./policies
+    dir: ./solutions/policies
     workspace: "policies"
     terraform_version: v1.9.0
     autoplan:
@@ -29,5 +29,6 @@ projects:
         - "*.yaml"
         - "*.tf"
         - "*.tfvars"
-        - "./modules/private-dns-zone-policies/*.tf"
+        - "./modules/dns-zone-policies/*.tf"
+        - "./modules/dns-resolver-policies/*.tf"
       enabled: true

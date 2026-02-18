@@ -1,9 +1,126 @@
 # AI Landing Zone Terraform
 
-This repository contains Terraform code to deploy the Azure AI Landing Zone, leveraging (Azure Verified Modules)[https://aka.ms/avm] (AVM).
+This repository contains Terraform code to deploy the Azure AI Landing Zone, leveraging [Azure Verified Modules](https://aka.ms/avm) (AVM).
 Since the AI Landing Zone uses several Private Endpoints, this repository also provides the Azure Policy code that automates the creation of A-records in the corresponding Private DNS Zones.
 
 ## Quick Start
 
-- AI Landing Zone: Check the instructions at [AI Landing Zone Module Test](./ai/README.md)
-- Azure Policy for AI Landing Zone: Check the instructions at [Azure Policy Module Test](./policies/README.md)
+- AI Landing Zone: Check the instructions at [AI Landing Zone Module Test](./solutions/ai/README.md)
+- Azure Policy for AI Landing Zone: Check the instructions at [Azure Policy Module Test](./solutions/policies/README.md)
+
+## Repository Structure
+
+```
+├── .github/workflows/          # GitHub Actions CI/CD pipelines
+│   ├── deploy-ai-lz.yml        # Workflow for AI Landing Zone deployment
+│   └── deploy-policies.yml     # Workflow for Policies deployment
+├── modules/                    # Reusable Terraform modules
+│   ├── ai-lz/                  # AI Landing Zone wrapper module
+│   ├── apim/                   # API Management configuration
+│   ├── dns-resolver-policies/  # DNS forwarding rules and policy
+│   └── dns-zone-policies/      # Private DNS zone DINE policies
+├── solutions/                  # Deployable solutions (root modules)
+│   ├── ai/                     # AI Landing Zone deployment
+│   └── policies/               # Azure Policies deployment
+└── atlantis.yaml               # Atlantis configuration (optional)
+```
+
+### Modules vs Solutions
+
+| Folder | Purpose |
+|--------|---------|
+| `modules/` | Reusable Terraform modules that encapsulate specific functionality. Not deployed directly. |
+| `solutions/` | Root modules that compose modules together for deployment. Contains `terraform.tfvars` and backend configuration. |
+
+### Module Descriptions
+
+| Module | Description |
+|--------|-------------|
+| `ai-lz` | Wrapper around the AVM AI/ML Landing Zone pattern module with feature flags and customizations |
+| `apim` | API Management instance configuration for AI Gateway pattern |
+| `dns-resolver-policies` | Creates DNS forwarding rules for private DNS zones + optional DINE policy |
+| `dns-zone-policies` | DINE policies for automatic Private Endpoint DNS zone group configuration |
+
+## GitHub Actions CI/CD
+
+This repository includes two GitHub Actions workflows for automated Terraform deployments:
+
+| Workflow | File | Deploys |
+|----------|------|---------|
+| Deploy AI Landing Zone | `.github/workflows/deploy-ai-lz.yml` | `solutions/ai/` |
+| Deploy Policies | `.github/workflows/deploy-policies.yml` | `solutions/policies/` |
+
+### Required Secrets
+
+Configure the following secrets in your GitHub repository (**Settings > Secrets and variables > Actions**):
+
+| Secret | Description |
+|--------|-------------|
+| `ARM_CLIENT_ID` | Azure Service Principal Application (client) ID |
+| `ARM_CLIENT_SECRET` | Azure Service Principal client secret |
+| `ARM_SUBSCRIPTION_ID` | Azure Subscription ID for deployment |
+| `ARM_TENANT_ID` | Azure AD Tenant ID |
+
+#### Creating a Service Principal
+
+```bash
+# Create a service principal with Contributor role
+az ad sp create-for-rbac \
+  --name "github-ai-landing-zone" \
+  --role "Contributor" \
+  --scopes "/subscriptions/<subscription-id>" \
+  --sdk-auth
+
+# For policy assignments, you may also need Owner or User Access Administrator
+az role assignment create \
+  --assignee "<client-id>" \
+  --role "User Access Administrator" \
+  --scope "/subscriptions/<subscription-id>"
+```
+
+### Workflow Triggers
+
+Both workflows support three trigger types:
+
+| Trigger | Behavior |
+|---------|----------|
+| **Push to main** | Auto-runs `validate` → `apply` when files in the relevant paths change |
+| **Pull Request** | Auto-runs `validate` → `plan` and uploads plan as artifact |
+| **Manual (workflow_dispatch)** | Choose action: `plan`, `apply`, or `destroy` |
+
+### Path Filters
+
+Workflows only trigger when relevant files change:
+
+- **AI Landing Zone**: `solutions/ai/**`, `modules/ai-lz/**`, `modules/apim/**`
+- **Policies**: `solutions/policies/**`, `modules/private-dns-zone-policies/**`, `modules/private-dns-resolver-policies/**`
+
+### Manual Deployment
+
+To run a workflow manually:
+
+1. Go to **Actions** tab in GitHub
+2. Select the workflow (e.g., "Deploy AI Landing Zone")
+3. Click **Run workflow**
+4. Select the action: `plan`, `apply`, or `destroy`
+5. Click **Run workflow**
+
+### Environment Protection (Recommended)
+
+The `apply` and `destroy` jobs use a `production` environment. Configure environment protection rules:
+
+1. Go to **Settings > Environments**
+2. Create an environment named `production`
+3. Configure protection rules:
+   - **Required reviewers**: Add team members who must approve deployments
+   - **Wait timer**: Optional delay before deployment starts
+   - **Deployment branches**: Restrict to `main` branch only
+
+### Workflow Jobs
+
+| Job | Description | When |
+|-----|-------------|------|
+| `validate` | Format check, init, validate | Always |
+| `plan` | Generate and upload plan | PRs, manual plan |
+| `apply` | Apply changes | Push to main, manual apply |
+| `destroy` | Destroy resources | Manual destroy only |

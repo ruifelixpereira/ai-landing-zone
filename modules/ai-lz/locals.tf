@@ -1,4 +1,7 @@
 locals {
+
+  base_name = coalesce(var.name_prefix, "foundry")
+
   # Container Registry SKU based on environment
   # sbox or dev -> Standard, qua -> Standard, prod -> Premium
   container_registry_sku                     = var.environment == "prod" ? "Premium" : "Standard"

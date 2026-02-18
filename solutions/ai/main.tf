@@ -7,7 +7,8 @@ module "ai_landing_zone" {
   networking_resource_group_name = var.networking_resource_group_name
   location            = var.location
   environment         = var.environment
-  enable_telemetry = var.enable_telemetry
+  name_prefix         = var.name_prefix
+  enable_telemetry    = var.enable_telemetry
   vnet_name = var.vnet_name
   vnet_address_space = var.vnet_address_space
   existing_zones_resource_group_resource_id = var.existing_zones_resource_group_resource_id
