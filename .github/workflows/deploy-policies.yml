@@ -118,7 +118,8 @@ jobs:
             -backend-config="resource_group_name=${{ secrets.TFSTATE_RESOURCE_GROUP }}" \
             -backend-config="storage_account_name=${{ secrets.TFSTATE_STORAGE_ACCOUNT }}" \
             -backend-config="container_name=${{ secrets.TFSTATE_CONTAINER }}" \
-            -backend-config="key=policies/${{ github.event.inputs.environment || 'dev' }}.tfstate"
+            -backend-config="key=policies/${{ github.event.inputs.environment || 'dev' }}.tfstate" \
+            -backend-config="use_azuread_auth=true"
 
       - name: Terraform Plan
         working-directory: ${{ env.WORKING_DIR }}
@@ -167,7 +168,8 @@ jobs:
             -backend-config="resource_group_name=${{ secrets.TFSTATE_RESOURCE_GROUP }}" \
             -backend-config="storage_account_name=${{ secrets.TFSTATE_STORAGE_ACCOUNT }}" \
             -backend-config="container_name=${{ secrets.TFSTATE_CONTAINER }}" \
-            -backend-config="key=policies/${{ github.event.inputs.environment || 'dev' }}.tfstate"
+            -backend-config="key=policies/${{ github.event.inputs.environment || 'dev' }}.tfstate" \
+            -backend-config="use_azuread_auth=true"
 
       - name: Terraform Plan
         working-directory: ${{ env.WORKING_DIR }}
@@ -213,7 +215,8 @@ jobs:
             -backend-config="resource_group_name=${{ secrets.TFSTATE_RESOURCE_GROUP }}" \
             -backend-config="storage_account_name=${{ secrets.TFSTATE_STORAGE_ACCOUNT }}" \
             -backend-config="container_name=${{ secrets.TFSTATE_CONTAINER }}" \
-            -backend-config="key=policies/${{ github.event.inputs.environment || 'dev' }}.tfstate"
+            -backend-config="key=policies/${{ github.event.inputs.environment || 'dev' }}.tfstate" \
+            -backend-config="use_azuread_auth=true"
 
       - name: Terraform Destroy
         working-directory: ${{ env.WORKING_DIR }}
