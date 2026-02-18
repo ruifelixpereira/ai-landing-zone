@@ -1,11 +1,11 @@
 # Example terraform.tfvars file
 # Copy this file to terraform.tfvars and customize values
 
+name_prefix                    = "rfp"
 ai_resource_group_name         = "rg-ai-core-9"
 networking_resource_group_name = "rg-ai-networking-9"
 location                       = "Sweden Central"
 environment                    = "dev"  # dev | qua | prod
-name_prefix                    = "rfp"
 enable_telemetry               = false
 vnet_name                      = "ai-lz-vnet-9"
 vnet_address_space             = "192.168.0.0/23"
