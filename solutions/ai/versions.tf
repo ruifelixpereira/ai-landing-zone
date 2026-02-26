@@ -8,7 +8,7 @@ terraform {
     }
     azapi = {
       source  = "Azure/azapi"
-      version = "~> 2.0"
+      version = "~> 2.8"
     }
     http = {
       source  = "hashicorp/http"
@@ -26,9 +26,9 @@ terraform {
   backend "azurerm" {
     use_oidc         = true
     use_azuread_auth = true
-    # resource_group_name  = "rg-tfstate"
-    # storage_account_name = "stterraformstate"
-    # container_name       = "tfstate"
-    # key                  = "ai-landing-zone/dev.tfstate"
+    resource_group_name  = "rg-tfstate"
+    storage_account_name = "stterraformstate"
+    container_name       = "tfstate"
+    key                  = "ai-landing-zone/dev.tfstate"
   }
 }

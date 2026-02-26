@@ -32,7 +32,7 @@ module "vnet" {
 
 module "ai_landing_zone" {
   source  = "Azure/avm-ptn-aiml-landing-zone/azurerm"
-  version = "0.3.0"
+  version = "0.4.0"
 
   location            = var.location
   resource_group_name = var.ai_resource_group_name
