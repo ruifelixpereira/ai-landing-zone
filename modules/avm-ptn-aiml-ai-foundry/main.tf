@@ -9,7 +9,7 @@ resource "random_string" "resource_token" {
 }
 
 resource "time_sleep" "wait_account_capability_host_propagation" {
-  count = var.ai_foundry.create_ai_agent_service && var.ai_foundry.network_injections == null ? 1 : 0
+  count = var.ai_foundry.create_ai_agent_service ? 1 : 0
 
   create_duration = "180s"
 
