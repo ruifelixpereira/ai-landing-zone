@@ -58,7 +58,7 @@ module "ai_landing_zone" {
   ai_foundry_definition = {
     purge_on_destroy = true
     ai_foundry = {
-      create_ai_agent_service    = var.create_ai_agent_service
+      #create_ai_agent_service    = var.create_ai_agent_service
       enable_diagnostic_settings = false
     }
     ai_model_deployments = {
