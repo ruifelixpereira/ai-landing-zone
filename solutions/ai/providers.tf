@@ -22,4 +22,8 @@ provider "azurerm" {
 
 provider "azapi" {
   # Uses the same authentication as azurerm
+
+  # Retry global do provider (aplica-se a todos os recursos AzAPI)
+  # O guia do AzAPI descreve o provider retry configuration e os cenários. 【1-3e6930】
+  maximum_busy_retry_attempts = 6
 }

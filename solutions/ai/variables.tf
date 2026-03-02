@@ -84,6 +84,12 @@ variable "tags" {
   description = "(Optional) Tags of the resource."
 }
 
+variable "create_ai_agent_service" {
+  description = "Enable AI Agent Service during AI Foundry account creation. Set false for initial deployment if long-running create hits context deadline, then enable and apply again."
+  type        = bool
+  default     = false
+}
+
 # ==========================================
 # Feature Flags
 # ==========================================

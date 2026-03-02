@@ -31,8 +31,7 @@ module "vnet" {
 }
 
 module "ai_landing_zone" {
-  source  = "Azure/avm-ptn-aiml-landing-zone/azurerm"
-  version = "0.4.0"
+  source = "../avm-ptn-aiml-landing-zone"
 
   location            = var.location
   resource_group_name = var.ai_resource_group_name
@@ -59,7 +58,7 @@ module "ai_landing_zone" {
   ai_foundry_definition = {
     purge_on_destroy = true
     ai_foundry = {
-      create_ai_agent_service    = true
+      create_ai_agent_service    = var.create_ai_agent_service
       enable_diagnostic_settings = false
     }
     ai_model_deployments = {
@@ -124,7 +123,8 @@ module "ai_landing_zone" {
   }
 
   apim_definition = {
-    deploy                     = false # contains(var.enabled_features, "apim")
+    #deploy                     = false # contains(var.enabled_features, "apim")
+    deploy                     = contains(var.enabled_features, "apim")
     sku_root                   = local.apim_sku_root
     sku_capacity               = local.apim_sku_capacity
     publisher_email            = "DoNotReply@exampleEmail.com"
@@ -254,6 +254,7 @@ module "ai_landing_zone" {
   }
 }
 
+/*
 # Get APIM Subnet details to add delegation
 data "azurerm_subnet" "apim_subnet" {
   name                 = "APIMSubnet"
@@ -262,7 +263,6 @@ data "azurerm_subnet" "apim_subnet" {
 
   depends_on = [module.ai_landing_zone]
 }
-
 
 # Update APIM subnet with delegation
 resource "azapi_update_resource" "apim_subnet_delegation" {
@@ -322,3 +322,4 @@ module "apim" {
 
   depends_on = [azapi_update_resource.apim_subnet_delegation]
 }
+*/
