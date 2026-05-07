@@ -1,4 +1,4 @@
-output "subnets" {
-  description = "A map of the deployed subnets in the AI PTN LZA."
+output "vnet_id" {
+  description = "The ID of the Virtual Network"
   value       = module.vnet.resource_id
 }
