@@ -171,5 +171,5 @@ This matches the reference architecture where applications interact with Foundry
 
 ## Quick Start
 
-- To deploy the AI Foundry Shared Platform Landing Zone (Spoke), check the instructions at [AI Foundry Shared Platform Landing Zone](./ai-shared-plat-lz/README.md)
+- To deploy the AI Foundry Shared Platform Landing Zone (Spoke), check the instructions at [AI Foundry Shared Platform Landing Zone](./solutions/ai-shared-plat-lz/README.md)
 - To deploy the AI Foundry Application Landing Zone (Spoke), check the instructions at [AI Foundry Application Landing Zone](./solutions/ai-applications-lz/README.md)

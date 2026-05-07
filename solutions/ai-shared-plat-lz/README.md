@@ -11,8 +11,7 @@ The deployment of the AI Shared Platform Landing Zones follows the steps outline
 ## Step 2. Prepare your environment
 
 ```bash
-cd ai-shared-plat-lz
-cd ai-hub-gateway-solution-accelerator
+cd ai-shared-plat-lz/ai-hub-gateway-solution-accelerator
 
 # Copy and customize the bicep/infra/main.bicepparam file with your values
 mv bicep/infra/main.bicepparam bicep/infra/main.bicepparam.backup
