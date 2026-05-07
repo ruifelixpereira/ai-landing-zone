@@ -8,6 +8,8 @@ param functionAppSubnetName string
 param functionAppNsgName string
 param apimRouteTableName string
 param privateDnsZoneNames array
+param dnsZoneRG string = ''
+param dnsSubId string = ''
 param vnetAddressPrefix string
 param apimSubnetAddressPrefix string
 param privateEndpointSubnetAddressPrefix string
@@ -17,6 +19,8 @@ param tags object = {}
 
 // Set to true to enable service endpoints for APIM subnet
 param enableServiceEndpointsForAPIM bool = true
+
+var useExistingDnsZones = !empty(dnsZoneRG) && !empty(dnsSubId)
 
 resource apimNsg 'Microsoft.Network/networkSecurityGroups@2020-07-01' = {
   name: apimNsgName
@@ -268,7 +272,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2019-11-01' = {
   }
 }
 
-resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = [for privateDnsZoneName in privateDnsZoneNames: {
+resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = [for privateDnsZoneName in privateDnsZoneNames: if (!useExistingDnsZones) {
   name: '${privateDnsZoneName}/privateDnsZoneLink'
   location: 'global'
   tags: tags

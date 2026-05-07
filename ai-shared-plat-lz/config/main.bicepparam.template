@@ -6,6 +6,7 @@ using './main.bicep'
 param environmentName = readEnvironmentVariable('AZURE_ENV_NAME', 'citadel-dev')
 param location = readEnvironmentVariable('AZURE_LOCATION', 'swedencentral')
 param apicLocation = readEnvironmentVariable('APIC_LOCATION', 'swedencentral')
+param customNaming = readEnvironmentVariable('CUSTOM_NAMING', '')
 param tags = {
   'azd-env-name': readEnvironmentVariable('AZURE_ENV_NAME', 'citadel-dev')
   SecurityControl: 'Ignore'

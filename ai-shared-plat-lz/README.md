@@ -35,11 +35,14 @@ azd auth login --tenant-id 71834302-da70-4741-ba0b-c3b9404e38a6
 
 # Initialize environment and give it a name (e.g. ai-hub-citadel-dev-01)
 #azd env new <your-environment-name>
-azd env new ai-hub-citadel-dev-01
+azd env new ai-hub-dev-01
 
 # Copy the .env file to your environment and customize it with your values
 #cp ../config/.env.template .azure/<your-environment-name>/.env
-cp ../config/.env.template .azure/ai-hub-citadel-dev-01/.env
+cp ../config/.env.template .azure/ai-hub-dev-01/.env
+
+# You can check your environment
+azd env get-values
 
 # Provision and deploy everything based on defaults
 azd up
@@ -60,7 +63,7 @@ az resource list \
 
 ## Private DNS Zones
 
-Since we are using the network architecture approach 2, the AI Foundry Shared Platform Landing Zone does not create any private DNS zones by default. You can choose to create and link private DNS zones to the hub and spoke VNets as needed for your specific use cases. Below are some common private DNS zones that you may want to consider creating for AI Foundry workloads:
+The AI Foundry Shared Platform Landing Zone requires several private endpoints that use private DNS zones. This is the list of private DNS zones that are commonly used for AI Foundry workloads:
 
 - privatelink.openai.azure.com
 - privatelink.vaultcore.azure.net
@@ -75,3 +78,21 @@ Since we are using the network architecture approach 2, the AI Foundry Shared Pl
 - privatelink.azure-api.net
 - privatelink.services.azure.com
 - privatelink.redis.azure.net
+
+Since we are using the network architecture approach 2, and we have a Hub connectivity LZ with the shared networking components, including the private DNS zones, to avoid the AI Foundry Shared Platform Landing Zone to create new private DNS zones by default we need to configure our environment to pass the existing private DNS zones resource IDs. This is done by including these variables in your environment:
+
+```bash
+EXISTING_DNS_ZONE_AI_SERVICES="/subscriptions/<your-subscription-id>/resourceGroups/<your-resource-group-name>/providers/Microsoft.Network/privateDnsZones/privatelink.services.ai.azure.com"
+EXISTING_DNS_ZONE_APIM="/subscriptions/<your-subscription-id>/resourceGroups/<your-resource-group-name>/providers/Microsoft.Network/privateDnsZones/privatelink.azure-api.net"
+EXISTING_DNS_ZONE_COGNITIVE="/subscriptions/<your-subscription-id>/resourceGroups/<your-resource-group-name>/providers/Microsoft.Network/privateDnsZones/privatelink.cognitiveservices.azure.com"
+EXISTING_DNS_ZONE_COSMOSDB="/subscriptions/<your-subscription-id>/resourceGroups/<your-resource-group-name>/providers/Microsoft.Network/privateDnsZones/privatelink.documents.azure.com"
+EXISTING_DNS_ZONE_EVENTHUB="/subscriptions/<your-subscription-id>/resourceGroups/<your-resource-group-name>/providers/Microsoft.Network/privateDnsZones/privatelink.servicebus.windows.net"
+EXISTING_DNS_ZONE_KEYVAULT="/subscriptions/<your-subscription-id>/resourceGroups/<your-resource-group-name>/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net"
+EXISTING_DNS_ZONE_MONITOR="/subscriptions/<your-subscription-id>/resourceGroups/<your-resource-group-name>/providers/Microsoft.Network/privateDnsZones/privatelink.monitor.azure.com"
+EXISTING_DNS_ZONE_OPENAI="/subscriptions/<your-subscription-id>/resourceGroups/<your-resource-group-name>/providers/Microsoft.Network/privateDnsZones/privatelink.openai.azure.com"
+EXISTING_DNS_ZONE_REDIS="/subscriptions/<your-subscription-id>/resourceGroups/<your-resource-group-name>/providers/Microsoft.Network/privateDnsZones/privatelink.redis.azure.net"
+EXISTING_DNS_ZONE_STORAGE_BLOB="/subscriptions/<your-subscription-id>/resourceGroups/<your-resource-group-name>/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net"
+EXISTING_DNS_ZONE_STORAGE_FILE="/subscriptions/<your-subscription-id>/resourceGroups/<your-resource-group-name>/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net"
+EXISTING_DNS_ZONE_STORAGE_QUEUE="/subscriptions/<your-subscription-id>/resourceGroups/<your-resource-group-name>/providers/Microsoft.Network/privateDnsZones/privatelink.queue.core.windows.net"
+EXISTING_DNS_ZONE_STORAGE_TABLE="/subscriptions/<your-subscription-id>/resourceGroups/<your-resource-group-name>/providers/Microsoft.Network/privateDnsZones/privatelink.table.core.windows.net"
+```

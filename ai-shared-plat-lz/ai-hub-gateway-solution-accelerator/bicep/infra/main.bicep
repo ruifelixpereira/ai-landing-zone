@@ -546,6 +546,9 @@ param aiFoundryModelsConfig array = [
 @description('Name of the text embedding model deployment in the primary Microsoft Foundry to be used for APIM semantic caching.')
 param primaryFoundryEmbeddingModelName string = 'text-embedding-3-large'
 
+@description('Optional custom naming prefix appended before the generated resource token. Use lowercase alphanumeric characters only.')
+param customNaming string = ''
+
 @description('Microsoft Entra ID tenant ID for authentication (only used when entraAuth is true).')
 param entraTenantId string = ''
 
@@ -565,7 +568,7 @@ param enableUnifiedAiApi bool = true
 // Load abbreviations from JSON file
 var abbrs = loadJsonContent('./abbreviations.json')
 // Generate a unique token for resources
-var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
+var resourceToken = toLower('${customNaming}${uniqueString(subscription().id, environmentName, location)}')
 
 // Transform aiFoundryModelsConfig to include the actual aiservice names based on aiserviceIndex
 var transformedAiFoundryModelsConfig = [for model in aiFoundryModelsConfig: union(model, {
@@ -708,6 +711,25 @@ var existingApimGatewayDnsZoneId = existingPrivateDnsZones.?apimGateway ?? ''
 var existingAiServicesDnsZoneId = existingPrivateDnsZones.?aiServices ?? ''
 var existingOpenAiDnsZoneId = existingPrivateDnsZones.?openai ?? ''
 var existingRedisDnsZoneId = existingPrivateDnsZones.?redis ?? ''
+var useLegacyExistingDnsZones = !empty(dnsZoneRG) && !empty(dnsSubscriptionId)
+var resolvedDnsZoneRG = useLegacyExistingDnsZones ? dnsZoneRG : (!useExistingVnet ? deploymentResourceGroup.name : dnsZoneRG)
+var resolvedDnsSubscriptionId = useLegacyExistingDnsZones ? dnsSubscriptionId : (!empty(dnsSubscriptionId) ? dnsSubscriptionId : subscription().subscriptionId)
+
+var dnsZoneResourceIdByName = {
+  '${openAiPrivateDnsZoneName}': existingOpenAiDnsZoneId
+  '${aiCogntiveServicesDnsZoneName}': existingCognitiveServicesDnsZoneId
+  '${keyVaultPrivateDnsZoneName}': existingKeyVaultDnsZoneId
+  '${eventHubPrivateDnsZoneName}': existingEventHubDnsZoneId
+  '${cosmosDbPrivateDnsZoneName}': existingCosmosDbDnsZoneId
+  '${storageBlobPrivateDnsZoneName}': existingStorageBlobDnsZoneId
+  '${storageFilePrivateDnsZoneName}': existingStorageFileDnsZoneId
+  '${storageTablePrivateDnsZoneName}': existingStorageTableDnsZoneId
+  '${storageQueuePrivateDnsZoneName}': existingStorageQueueDnsZoneId
+  '${apimV2SkuDnsZoneName}': existingApimGatewayDnsZoneId
+  '${aiServicesDnsZoneName}': existingAiServicesDnsZoneId
+  '${redisPrivateDnsZoneName}': existingRedisDnsZoneId
+  '${monitorPrivateDnsZoneName}': existingMonitorDnsZoneId
+}
 
 // Existing DNS zone resource IDs for AI Foundry (for BYO network scenarios)
 var aiFoundryDnsZoneResourceIds = union(
@@ -716,9 +738,37 @@ var aiFoundryDnsZoneResourceIds = union(
   !empty(existingAiServicesDnsZoneId) ? [existingAiServicesDnsZoneId] : []
 )
 
-// Determine if we're using explicit DNS zone resource IDs (new approach) vs legacy RG/Subscription lookup
-#disable-next-line no-unused-vars
-var useExplicitDnsZoneIds = !empty(existingCosmosDbDnsZoneId) || !empty(existingEventHubDnsZoneId) || !empty(existingStorageBlobDnsZoneId)
+var privateDnsZoneNamesForLocalCreate = union(
+  !useLegacyExistingDnsZones && empty(existingOpenAiDnsZoneId) ? [openAiPrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && empty(existingCognitiveServicesDnsZoneId) ? [aiCogntiveServicesDnsZoneName] : [],
+  !useLegacyExistingDnsZones && empty(existingKeyVaultDnsZoneId) ? [keyVaultPrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && empty(existingEventHubDnsZoneId) ? [eventHubPrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && empty(existingCosmosDbDnsZoneId) ? [cosmosDbPrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && empty(existingStorageBlobDnsZoneId) ? [storageBlobPrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && empty(existingStorageFileDnsZoneId) ? [storageFilePrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && empty(existingStorageTableDnsZoneId) ? [storageTablePrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && empty(existingStorageQueueDnsZoneId) ? [storageQueuePrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && empty(existingApimGatewayDnsZoneId) ? [apimV2SkuDnsZoneName] : [],
+  !useLegacyExistingDnsZones && empty(existingAiServicesDnsZoneId) ? [aiServicesDnsZoneName] : [],
+  !useLegacyExistingDnsZones && empty(existingRedisDnsZoneId) ? [redisPrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && useAzureMonitorPrivateLinkScope && empty(existingMonitorDnsZoneId) ? [monitorPrivateDnsZoneName] : []
+)
+
+var privateDnsZoneNamesForExplicitLinks = union(
+  !useLegacyExistingDnsZones && !empty(existingOpenAiDnsZoneId) ? [openAiPrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && !empty(existingCognitiveServicesDnsZoneId) ? [aiCogntiveServicesDnsZoneName] : [],
+  !useLegacyExistingDnsZones && !empty(existingKeyVaultDnsZoneId) ? [keyVaultPrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && !empty(existingEventHubDnsZoneId) ? [eventHubPrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && !empty(existingCosmosDbDnsZoneId) ? [cosmosDbPrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && !empty(existingStorageBlobDnsZoneId) ? [storageBlobPrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && !empty(existingStorageFileDnsZoneId) ? [storageFilePrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && !empty(existingStorageTableDnsZoneId) ? [storageTablePrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && !empty(existingStorageQueueDnsZoneId) ? [storageQueuePrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && !empty(existingApimGatewayDnsZoneId) ? [apimV2SkuDnsZoneName] : [],
+  !useLegacyExistingDnsZones && !empty(existingAiServicesDnsZoneId) ? [aiServicesDnsZoneName] : [],
+  !useLegacyExistingDnsZones && !empty(existingRedisDnsZoneId) ? [redisPrivateDnsZoneName] : [],
+  !useLegacyExistingDnsZones && useAzureMonitorPrivateLinkScope && !empty(existingMonitorDnsZoneId) ? [monitorPrivateDnsZoneName] : []
+)
 
 // Base DNS zones (always included)
 var baseDnsZoneNames = [
@@ -740,15 +790,15 @@ var baseDnsZoneNames = [
 var privateDnsZoneNames = useAzureMonitorPrivateLinkScope ? concat(baseDnsZoneNames, [monitorPrivateDnsZoneName]) : baseDnsZoneNames
 
 // Organize resources in a resource group
-resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+resource deploymentResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: !empty(resourceGroupName) ? resourceGroupName : '${abbrs.resourcesResourceGroups}${environmentName}'
   location: location
   tags: tags
 }
 
-module dnsDeployment './modules/networking/dns.bicep' = [for privateDnsZoneName in privateDnsZoneNames: if(!useExistingVnet) {
+module dnsDeployment './modules/networking/dns.bicep' = [for privateDnsZoneName in privateDnsZoneNamesForLocalCreate: if(!useExistingVnet) {
   name: 'dns-deployment-${privateDnsZoneName}'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     name: privateDnsZoneName
     tags: tags
@@ -757,7 +807,7 @@ module dnsDeployment './modules/networking/dns.bicep' = [for privateDnsZoneName 
 
 module vnet './modules/networking/vnet.bicep' = if(!useExistingVnet) {
   name: 'vnet'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     name: !empty(vnetName) ? vnetName : 'vnet-${resourceToken}'
     apimSubnetName: !empty(apimSubnetName) ? apimSubnetName : 'snet-apim'
@@ -773,7 +823,9 @@ module vnet './modules/networking/vnet.bicep' = if(!useExistingVnet) {
     functionAppSubnetAddressPrefix: functionAppSubnetPrefix
     location: location
     tags: tags
-    privateDnsZoneNames: privateDnsZoneNames
+    privateDnsZoneNames: privateDnsZoneNamesForLocalCreate
+    dnsZoneRG: dnsZoneRG
+    dnsSubId: dnsSubscriptionId
     apimRouteTableName: !empty(apimRouteTableName) ? apimRouteTableName : 'rt-apim-${resourceToken}'
   }
   dependsOn: [
@@ -781,9 +833,35 @@ module vnet './modules/networking/vnet.bicep' = if(!useExistingVnet) {
   ]
 }
 
+module existingDnsZoneLinks './modules/networking/private-dns-zone-link.bicep' = [for privateDnsZoneName in privateDnsZoneNames: if(!useExistingVnet && useLegacyExistingDnsZones) {
+  name: 'existing-dns-zone-link-${take(replace(privateDnsZoneName, '.', '-'), 48)}'
+  scope: resourceGroup(dnsSubscriptionId, dnsZoneRG)
+  params: {
+    dnsZoneName: privateDnsZoneName
+    virtualNetworkId: vnet.outputs.virtualNetworkId
+    tags: tags
+  }
+  dependsOn: [
+    vnet
+  ]
+}]
+
+module existingDnsZoneLinksById './modules/networking/private-dns-zone-link.bicep' = [for privateDnsZoneName in privateDnsZoneNamesForExplicitLinks: if(!useExistingVnet) {
+  name: 'existing-dns-zone-link-by-id-${take(replace(privateDnsZoneName, '.', '-'), 42)}'
+  scope: resourceGroup(split(dnsZoneResourceIdByName[privateDnsZoneName], '/')[2], split(dnsZoneResourceIdByName[privateDnsZoneName], '/')[4])
+  params: {
+    dnsZoneName: split(dnsZoneResourceIdByName[privateDnsZoneName], '/')[8]
+    virtualNetworkId: vnet.outputs.virtualNetworkId
+    tags: tags
+  }
+  dependsOn: [
+    vnet
+  ]
+}]
+
 module vnetExisting './modules/networking/vnet-existing.bicep' = if(useExistingVnet) {
   name: 'vnetExisting'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     name: vnetName
     apimSubnetName: !empty(apimSubnetName) ? apimSubnetName : 'snet-apim'
@@ -798,7 +876,7 @@ module vnetExisting './modules/networking/vnet-existing.bicep' = if(useExistingV
 
 module apimManagedIdentity './modules/security/managed-identity-apim.bicep' = {
   name: 'apim-managed-identity'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     name: !empty(apimIdentityName) ? apimIdentityName : '${abbrs.managedIdentityUserAssignedIdentities}apim-${resourceToken}'
     location: location
@@ -808,7 +886,7 @@ module apimManagedIdentity './modules/security/managed-identity-apim.bicep' = {
 
 module usageManagedIdentity './modules/security/managed-identity-usage.bicep' = {
   name: 'logicapp-usage-managed-identity'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     name: !empty(usageLogicAppIdentityName) ? usageLogicAppIdentityName : '${abbrs.managedIdentityUserAssignedIdentities}logicapp-${resourceToken}'
     location: location
@@ -819,7 +897,7 @@ module usageManagedIdentity './modules/security/managed-identity-usage.bicep' = 
 
 module monitoring './modules/monitor/monitoring.bicep' = {
   name: 'monitoring'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     location: location
     tags: tags
@@ -839,8 +917,8 @@ module monitoring './modules/monitor/monitoring.bicep' = {
     privateEndpointSubnetName: useExistingVnet ? vnetExisting.outputs.privateEndpointSubnetName : vnet.outputs.privateEndpointSubnetName
     applicationInsightsDnsZoneName: monitorPrivateDnsZoneName
     createDashboard: createAppInsightsDashboards
-    dnsZoneRG: !useExistingVnet ? resourceGroup.name : dnsZoneRG
-    dnsSubscriptionId: !empty(dnsSubscriptionId) ? dnsSubscriptionId : subscription().subscriptionId
+    dnsZoneRG: resolvedDnsZoneRG
+    dnsSubscriptionId: resolvedDnsSubscriptionId
     dnsZoneResourceId: existingMonitorDnsZoneId
     usePrivateLinkScope: useAzureMonitorPrivateLinkScope
   }
@@ -848,7 +926,7 @@ module monitoring './modules/monitor/monitoring.bicep' = {
 
 module contentSafety 'modules/ai/cognitiveservices.bicep' = {
   name: 'ai-content-safety'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     name: !empty(aiContentSafetyName) ? aiContentSafetyName : '${abbrs.cognitiveServicesAccounts}consafety-${resourceToken}'
     location: location
@@ -865,15 +943,15 @@ module contentSafety 'modules/ai/cognitiveservices.bicep' = {
       name: aiContentSafetySkuName
     }
     vNetRG: useExistingVnet ? vnetExisting.outputs.vnetRG : vnet.outputs.vnetRG
-    dnsZoneRG: !useExistingVnet ? resourceGroup.name : dnsZoneRG
-    dnsSubscriptionId: !empty(dnsSubscriptionId) ? dnsSubscriptionId : subscription().subscriptionId
+    dnsZoneRG: resolvedDnsZoneRG
+    dnsSubscriptionId: resolvedDnsSubscriptionId
     dnsZoneResourceId: existingCognitiveServicesDnsZoneId
   }
 }
 
 module languageService 'modules/ai/cognitiveservices.bicep' = {
   name: 'ai-language-service'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     name: !empty(languageServiceName) ? languageServiceName : '${abbrs.cognitiveServicesAccounts}language-${resourceToken}'
     location: location
@@ -890,15 +968,15 @@ module languageService 'modules/ai/cognitiveservices.bicep' = {
       name: languageServiceSkuName
     }
     vNetRG: useExistingVnet ? vnetExisting.outputs.vnetRG : vnet.outputs.vnetRG
-    dnsZoneRG: !useExistingVnet ? resourceGroup.name : dnsZoneRG
-    dnsSubscriptionId: !empty(dnsSubscriptionId) ? dnsSubscriptionId : subscription().subscriptionId
+    dnsZoneRG: resolvedDnsZoneRG
+    dnsSubscriptionId: resolvedDnsSubscriptionId
     dnsZoneResourceId: existingCognitiveServicesDnsZoneId
   }
 }
 
 module keyVault './modules/keyvault/keyvault.bicep' = {
   name: 'key-vault'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     keyVaultName: !empty(keyVaultName) ? keyVaultName : '${abbrs.keyVaultVaults}${resourceToken}'
     location: location
@@ -910,8 +988,8 @@ module keyVault './modules/keyvault/keyvault.bicep' = {
     vNetRG: useExistingVnet ? vnetExisting.outputs.vnetRG : vnet.outputs.vnetRG
     keyVaultPrivateEndpointName: !empty(keyVaultPrivateEndpointName) ? keyVaultPrivateEndpointName : '${abbrs.keyVaultVaults}pe-${resourceToken}'
     keyVaultDnsZoneName: keyVaultPrivateDnsZoneName
-    dnsZoneRG: !useExistingVnet ? resourceGroup.name : dnsZoneRG
-    dnsSubscriptionId: !empty(dnsSubscriptionId) ? dnsSubscriptionId : subscription().subscriptionId
+    dnsZoneRG: resolvedDnsZoneRG
+    dnsSubscriptionId: resolvedDnsSubscriptionId
     dnsZoneResourceId: existingKeyVaultDnsZoneId
     apimPrincipalId: apimManagedIdentity.outputs.managedIdentityPrincipalId
   }
@@ -919,7 +997,7 @@ module keyVault './modules/keyvault/keyvault.bicep' = {
 
 module foundry 'modules/foundry/foundry.bicep' = if(enableAIFoundry) {
   name: 'ai-foundry'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     aiServicesConfig: aiFoundryInstances
     modelsConfig: transformedAiFoundryModelsConfig
@@ -939,8 +1017,8 @@ module foundry 'modules/foundry/foundry.bicep' = if(enableAIFoundry) {
     privateEndpointSubnetName: useExistingVnet ? vnetExisting.outputs.privateEndpointSubnetName : vnet.outputs.privateEndpointSubnetName
     aiFoundryPrivateEndpointBaseName: !empty(aiFoundryPrivateEndpointName) ? aiFoundryPrivateEndpointName : '${abbrs.cognitiveServicesAccounts}foundry-pe-${resourceToken}'
     aiServicesDnsZoneNames: aiFoundryDnsZoneNames
-    dnsZoneRG: !useExistingVnet ? resourceGroup.name : dnsZoneRG
-    dnsSubscriptionId: !empty(dnsSubscriptionId) ? dnsSubscriptionId : subscription().subscriptionId
+    dnsZoneRG: resolvedDnsZoneRG
+    dnsSubscriptionId: resolvedDnsSubscriptionId
     dnsZoneResourceIds: aiFoundryDnsZoneResourceIds
     // Key Vault connection parameters
     keyVaultId: keyVault.outputs.keyVaultId
@@ -950,7 +1028,7 @@ module foundry 'modules/foundry/foundry.bicep' = if(enableAIFoundry) {
 
 module eventHub './modules/event-hub/event-hub.bicep' = {
   name: 'event-hub'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     name: !empty(eventHubNamespaceName) ? eventHubNamespaceName : '${abbrs.eventHubNamespaces}${resourceToken}'
     location: location
@@ -961,8 +1039,8 @@ module eventHub './modules/event-hub/event-hub.bicep' = {
     eventHubDnsZoneName: eventHubPrivateDnsZoneName
     publicNetworkAccess: eventHubNetworkAccess
     vNetRG: useExistingVnet ? vnetExisting.outputs.vnetRG : vnet.outputs.vnetRG
-    dnsZoneRG: !useExistingVnet ? resourceGroup.name : dnsZoneRG
-    dnsSubscriptionId: !empty(dnsSubscriptionId) ? dnsSubscriptionId : subscription().subscriptionId
+    dnsZoneRG: resolvedDnsZoneRG
+    dnsSubscriptionId: resolvedDnsSubscriptionId
     dnsZoneResourceId: existingEventHubDnsZoneId
     capacity: eventHubCapacityUnits
   }
@@ -970,7 +1048,7 @@ module eventHub './modules/event-hub/event-hub.bicep' = {
 
 module managedRedis './modules/redis/redis.bicep' = if (enableManagedRedis) {
   name: 'managed-redis'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     name: !empty(redisCacheName) ? redisCacheName : '${abbrs.cacheRedis}${resourceToken}'
     location: location
@@ -985,8 +1063,8 @@ module managedRedis './modules/redis/redis.bicep' = if (enableManagedRedis) {
     privateEndpointSubnetName: useExistingVnet ? vnetExisting.outputs.privateEndpointSubnetName : vnet.outputs.privateEndpointSubnetName
     vNetRG: useExistingVnet ? vnetExisting.outputs.vnetRG : vnet.outputs.vnetRG
     redisDnsZoneName: redisPrivateDnsZoneName
-    dnsZoneRG: !useExistingVnet ? resourceGroup.name : dnsZoneRG
-    dnsSubscriptionId: !empty(dnsSubscriptionId) ? dnsSubscriptionId : subscription().subscriptionId
+    dnsZoneRG: resolvedDnsZoneRG
+    dnsSubscriptionId: resolvedDnsSubscriptionId
     dnsZoneResourceId: existingRedisDnsZoneId
   }
 }
@@ -1008,7 +1086,7 @@ var resolvedEntraAudience = !empty(entraAudience) ? entraAudience : (entraAuth ?
 // where the secret isn't already in Key Vault from the entra-id-setup script)
 module entraClientSecretKv './modules/keyvault/keyvault-secret.bicep' = if (entraAuth && !empty(entraClientSecret)) {
   name: 'entra-client-secret-kv'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     keyVaultName: keyVault.outputs.keyVaultName
     secretName: 'ENTRA-APP-CLIENT-SECRET'
@@ -1018,7 +1096,7 @@ module entraClientSecretKv './modules/keyvault/keyvault-secret.bicep' = if (entr
 
 module apim './modules/apim/apim.bicep' = {
   name: 'apim'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     name: !empty(apimServiceName) ? apimServiceName : '${abbrs.apiManagementService}${resourceToken}'
     location: location
@@ -1055,8 +1133,8 @@ module apim './modules/apim/apim.bicep' = {
     apimV2PrivateEndpointName: !empty(apimV2PrivateEndpointName) ? apimV2PrivateEndpointName : '${abbrs.apiManagementService}pe-${resourceToken}'
     apimV2PublicNetworkAccess: apimV2PublicNetworkAccess
     privateEndpointSubnetId: useExistingVnet ? vnetExisting.outputs.privateEndpointSubnetId : vnet.outputs.privateEndpointSubnetId
-    dnsZoneRG: !useExistingVnet ? resourceGroup.name : dnsZoneRG
-    dnsSubscriptionId: !empty(dnsSubscriptionId) ? dnsSubscriptionId : subscription().subscriptionId
+    dnsZoneRG: resolvedDnsZoneRG
+    dnsSubscriptionId: resolvedDnsSubscriptionId
     dnsZoneResourceId: existingApimGatewayDnsZoneId
     isMCPSampleDeployed: true
     enableAPICenter: enableAPICenter
@@ -1073,7 +1151,7 @@ module apim './modules/apim/apim.bicep' = {
 
 module cosmosDb './modules/cosmos-db/cosmos-db.bicep' = {
   name: 'cosmos-db'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     accountName: !empty(cosmosDbAccountName) ? cosmosDbAccountName : '${abbrs.documentDBDatabaseAccounts}${resourceToken}'
     location: location
@@ -1083,8 +1161,8 @@ module cosmosDb './modules/cosmos-db/cosmos-db.bicep' = {
     cosmosPrivateEndpointName: !empty(cosmosDbPrivateEndpointName) ? cosmosDbPrivateEndpointName : '${abbrs.documentDBDatabaseAccounts}pe-${resourceToken}'
     privateEndpointSubnetName: useExistingVnet ? vnetExisting.outputs.privateEndpointSubnetName : vnet.outputs.privateEndpointSubnetName
     vNetRG: useExistingVnet ? vnetExisting.outputs.vnetRG : vnet.outputs.vnetRG
-    dnsZoneRG: !useExistingVnet ? resourceGroup.name : dnsZoneRG
-    dnsSubscriptionId: !empty(dnsSubscriptionId) ? dnsSubscriptionId : subscription().subscriptionId
+    dnsZoneRG: resolvedDnsZoneRG
+    dnsSubscriptionId: resolvedDnsSubscriptionId
     dnsZoneResourceId: existingCosmosDbDnsZoneId
     throughput: cosmosDbRUs
     publicAccess: cosmosDbPublicAccess
@@ -1093,11 +1171,11 @@ module cosmosDb './modules/cosmos-db/cosmos-db.bicep' = {
 
 module storageAccount './modules/functionapp/storageaccount.bicep' = {
   name: 'storage'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     location: location
     tags: tags
-    storageAccountName: !empty(storageAccountName) ? storageAccountName : 'funcusage${resourceToken}'
+    storageAccountName: !empty(storageAccountName) ? storageAccountName : 'func${resourceToken}'
     functionAppManagedIdentityName: usageManagedIdentity.outputs.managedIdentityName
     vNetName: useExistingVnet ? vnetExisting.outputs.vnetName : vnet.outputs.vnetName
     privateEndpointSubnetName: useExistingVnet ? vnetExisting.outputs.privateEndpointSubnetName : vnet.outputs.privateEndpointSubnetName
@@ -1111,8 +1189,8 @@ module storageAccount './modules/functionapp/storageaccount.bicep' = {
     storageQueuePrivateEndpointName: !empty(storageQueuePrivateEndpointName) ? storageQueuePrivateEndpointName : '${abbrs.storageStorageAccounts}queue-pe-${resourceToken}'
     logicContentShareName: logicContentShareName
     vNetRG: useExistingVnet ? vnetExisting.outputs.vnetRG : vnet.outputs.vnetRG
-    dnsZoneRG: !useExistingVnet ? resourceGroup.name : dnsZoneRG
-    dnsSubscriptionId: !empty(dnsSubscriptionId) ? dnsSubscriptionId : subscription().subscriptionId
+    dnsZoneRG: resolvedDnsZoneRG
+    dnsSubscriptionId: resolvedDnsSubscriptionId
     storageBlobDnsZoneResourceId: existingStorageBlobDnsZoneId
     storageFileDnsZoneResourceId: existingStorageFileDnsZoneId
     storageTableDnsZoneResourceId: existingStorageTableDnsZoneId
@@ -1122,7 +1200,7 @@ module storageAccount './modules/functionapp/storageaccount.bicep' = {
 
 module logicApp './modules/logicapp/logicapp.bicep' = {
   name: 'usageLogicApp'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     location: location
     tags: tags
@@ -1153,7 +1231,7 @@ module logicApp './modules/logicapp/logicapp.bicep' = {
 
 module apiCenter './modules/apic/apic.bicep' = if(enableAPICenter) {
   name: 'api-center'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     apicServiceName: !empty(apicServiceName) ? apicServiceName : '${abbrs.apiCenterService}${resourceToken}'
     apicsku: apicSku
@@ -1165,7 +1243,7 @@ module apiCenter './modules/apic/apic.bicep' = if(enableAPICenter) {
 // Grant AI Foundry resources access to Key Vault (deployed after both Key Vault and Foundry)
 module keyVaultFoundryRbac './modules/keyvault/keyvault-rbac.bicep' = if(enableAIFoundry) {
   name: 'key-vault-foundry-rbac'
-  scope: resourceGroup
+  scope: deploymentResourceGroup
   params: {
     keyVaultName: keyVault.outputs.keyVaultName
     aiFoundryPrincipalIds: foundry.outputs.aiFoundryPrincipalIds
@@ -1179,7 +1257,7 @@ module keyVaultFoundryRbac './modules/keyvault/keyvault-rbac.bicep' = if(enableA
 output APIM_NAME string = apim.outputs.apimName
 output APIM_AOI_PATH string = apim.outputs.apimOpenaiApiPath
 output APIM_GATEWAY_URL string = apim.outputs.apimGatewayUrl
-output AZURE_RESOURCE_GROUP string = resourceGroup.name
+output AZURE_RESOURCE_GROUP string = deploymentResourceGroup.name
 output AI_FOUNDRY_SERVICES array = enableAIFoundry ? foundry!.outputs.extendedAIServicesConfig : []
 output LLM_BACKEND_CONFIG array = llmBackendConfig
 output KEY_VAULT_NAME string = keyVault.outputs.keyVaultName
