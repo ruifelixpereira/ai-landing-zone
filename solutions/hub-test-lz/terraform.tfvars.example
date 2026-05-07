@@ -1,0 +1,30 @@
+location            = "Sweden Central"
+resource_group_name = "rg-hub-connectivity-test"
+vnet_name           = "vnet-hub-test-01"
+vnet_address_space  = ["10.0.0.0/23"]
+
+private_dns_zone_names = [
+  "privatelink.cognitiveservices.azure.com",
+  "privatelink.openai.azure.com",
+  "privatelink.search.windows.net",
+  "privatelink.blob.core.windows.net",
+  "privatelink.vaultcore.azure.net",
+  "privatelink.monitor.azure.com",
+  "privatelink.servicebus.windows.net",
+  "privatelink.documents.azure.com",
+  "privatelink.file.core.windows.net",
+  "privatelink.table.core.windows.net",
+  "privatelink.queue.core.windows.net",
+  "privatelink.cognitiveservices.azure.com",
+  "privatelink.azure-api.net",
+  "privatelink.services.azure.com",
+  "privatelink.redis.azure.net",
+  "privatelink.services.ai.azure.com",
+  "privatelink.vault.azure.net"
+]
+
+tags = {
+  environment = "test"
+  workload    = "hub-connectivity"
+  managed_by  = "terraform"
+}
