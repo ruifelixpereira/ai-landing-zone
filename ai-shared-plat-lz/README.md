@@ -13,13 +13,6 @@ The deployment of the AI Shared Platform Landing Zones follows the steps outline
 ```bash
 cd ai-shared-plat-lz
 
-# Create a working directory:
-mkdir ai-hub-citadel-deployment
-
-# Make the repository your current directory:
-cd ai-hub-citadel-deployment # it may differ if you used git clone
-
-
 # Copy repo files
 azd init --template Azure-Samples/ai-hub-gateway-solution-accelerator -e ai-hub-citadel-dev --branch citadel-v1
 
@@ -27,7 +20,7 @@ cd ai-hub-gateway-solution-accelerator
 
 # Copy and customize the bicep/infra/main.bicepparam file with your values
 mv bicep/infra/main.bicepparam bicep/infra/main.bicepparam.backup
-cp ../../config/main.bicepparam.template bicep/infra/main.bicepparam
+cp ../config/main.bicepparam.template bicep/infra/main.bicepparam
 ```
 
 ## Step 3. Deploy with azd
@@ -45,8 +38,8 @@ azd auth login --tenant-id 71834302-da70-4741-ba0b-c3b9404e38a6
 azd env new ai-hub-citadel-dev-01
 
 # Copy the .env file to your environment and customize it with your values
-#cp ../../config/.env.template .azure/<your-environment-name>/.env
-cp ../../config/.env.template .azure/ai-hub-citadel-dev-01/.env
+#cp ../config/.env.template .azure/<your-environment-name>/.env
+cp ../config/.env.template .azure/ai-hub-citadel-dev-01/.env
 
 # Provision and deploy everything based on defaults
 azd up
@@ -65,24 +58,20 @@ az resource list \
   --output table
 ```
 
+## Private DNS Zones
 
+Since we are using the network architecture approach 2, the AI Foundry Shared Platform Landing Zone does not create any private DNS zones by default. You can choose to create and link private DNS zones to the hub and spoke VNets as needed for your specific use cases. Below are some common private DNS zones that you may want to consider creating for AI Foundry workloads:
 
-
-
-// privatelink.openai.azure.com
-// privatelink.vaultcore.azure.net
-// privatelink.monitor.azure.com
-// privatelink.servicebus.windows.net
-// privatelink.documents.azure.com
-// privatelink.blob.core.windows.net
-// privatelink.file.core.windows.net
-// privatelink.table.core.windows.net
-// privatelink.queue.core.windows.net
-// privatelink.cognitiveservices.azure.com
-// privatelink.azure-api.net
-// privatelink.services.azure.com
-// privatelink.redis.azure.net
-
-services.ai.azure.com
-vault.azure.net
------
+- privatelink.openai.azure.com
+- privatelink.vaultcore.azure.net
+- privatelink.monitor.azure.com
+- privatelink.servicebus.windows.net
+- privatelink.documents.azure.com
+- privatelink.blob.core.windows.net
+- privatelink.file.core.windows.net
+- privatelink.table.core.windows.net
+- privatelink.queue.core.windows.net
+- privatelink.cognitiveservices.azure.com
+- privatelink.azure-api.net
+- privatelink.services.azure.com
+- privatelink.redis.azure.net
