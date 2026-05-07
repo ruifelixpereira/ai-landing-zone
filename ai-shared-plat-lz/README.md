@@ -12,10 +12,6 @@ The deployment of the AI Shared Platform Landing Zones follows the steps outline
 
 ```bash
 cd ai-shared-plat-lz
-
-# Copy repo files
-azd init --template Azure-Samples/ai-hub-gateway-solution-accelerator -e ai-hub-citadel-dev --branch citadel-v1
-
 cd ai-hub-gateway-solution-accelerator
 
 # Copy and customize the bicep/infra/main.bicepparam file with your values
