@@ -10,6 +10,7 @@ param customNaming = readEnvironmentVariable('CUSTOM_NAMING', '')
 param tags = {
   'azd-env-name': readEnvironmentVariable('AZURE_ENV_NAME', 'citadel-dev')
   SecurityControl: 'Ignore'
+  CostControl: 'Ignore'
 }
 
 // ============================================================================
@@ -125,7 +126,7 @@ param redisPublicNetworkAccess = readEnvironmentVariable('REDIS_PUBLIC_NETWORK_A
 param createAppInsightsDashboards = bool(readEnvironmentVariable('CREATE_DASHBOARDS', 'false'))
 param enableAIModelInference = bool(readEnvironmentVariable('ENABLE_AI_MODEL_INFERENCE', 'true'))
 param enableDocumentIntelligence = bool(readEnvironmentVariable('ENABLE_DOCUMENT_INTELLIGENCE', 'true'))
-param enableAzureAISearch = bool(readEnvironmentVariable('ENABLE_AZURE_AI_SEARCH', 'false'))
+param enableAzureAISearch = bool(readEnvironmentVariable('ENABLE_AZURE_AI_SEARCH', 'true'))
 param enableAIGatewayPiiRedaction = bool(readEnvironmentVariable('ENABLE_PII_REDACTION', 'true'))
 param enableOpenAIRealtime = bool(readEnvironmentVariable('ENABLE_OPENAI_REALTIME', 'true'))
 param enableAIFoundry = bool(readEnvironmentVariable('ENABLE_AI_FOUNDRY', 'true'))
@@ -186,15 +187,27 @@ param logicContentShareName = readEnvironmentVariable('LOGIC_CONTENT_SHARE_NAME'
 
 // AI Search instances configuration - add more instances by adding to this array
 // Example: [{name: 'ai-search-01', url: 'https://search1.search.windows.net/', description: 'AI Search 1'}]
-param aiSearchInstances = []
+param aiSearchInstances = [{name: 'fl-swedencentral-aisearch', url: 'https://fl-swedencentral-aisearch.search.windows.net/', description: 'FoundryIQ AI Search instance in Sweden Central'}]
 
 // AI Foundry instances configuration array
 param aiFoundryInstances = [
   {
     name: readEnvironmentVariable('AI_FOUNDRY_RESOURCE_NAME', '')
-    location: readEnvironmentVariable('AZURE_LOCATION', 'eastus')
+    location: readEnvironmentVariable('AZURE_LOCATION', 'swedencentral')
     customSubDomainName: ''
-    defaultProjectName: 'citadel-governance-project'
+    defaultProjectName: 'citadel-foundry-models-swedencentral'
+  }
+  {
+    name: readEnvironmentVariable('AI_FOUNDRY_RESOURCE_NAME_2', '')
+    location: 'italynorth'
+    customSubDomainName: ''
+    defaultProjectName: 'citadel-foundry-models-italynorth'
+  }
+  {
+    name: readEnvironmentVariable('AI_FOUNDRY_RESOURCE_NAME_3', '')
+    location: 'polandcentral'
+    customSubDomainName: ''
+    defaultProjectName: 'citadel-foundry-models-polandcentral'
   }
 ]
 
@@ -208,12 +221,144 @@ param aiFoundryModelsConfig = [
     name: 'gpt-4.1'
     publisher: 'OpenAI'
     version: '2025-04-14'
-    sku: 'GlobalStandard'
+    sku: 'DataZoneStandard'
     capacity: 100
     retirementDate: '2026-10-14'
     apiVersion: '2025-04-01-preview'
     timeout: 180
     aiserviceIndex: 0
+  }
+  {
+    name: 'gpt-4.1'
+    publisher: 'OpenAI'
+    version: '2025-04-14'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2026-10-14'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 1
+  }
+  {
+    name: 'gpt-4.1'
+    publisher: 'OpenAI'
+    version: '2025-04-14'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2026-10-14'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 2
+  }
+  {
+    name: 'gpt-5.4'
+    publisher: 'OpenAI'
+    version: '2026-03-05'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-03-05'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 0
+  }
+  {
+    name: 'gpt-5.4'
+    publisher: 'OpenAI'
+    version: '2026-03-05'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-03-05'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 1
+  }
+  {
+    name: 'gpt-5.4'
+    publisher: 'OpenAI'
+    version: '2026-03-05'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-03-05'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 2
+  }
+  {
+    name: 'gpt-5.4-mini'
+    publisher: 'OpenAI'
+    version: '2026-03-17'
+    sku: 'GlobalStandard'
+    capacity: 100
+    retirementDate: '2027-03-18'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 0
+  }
+  {
+    name: 'gpt-5.4-mini'
+    publisher: 'OpenAI'
+    version: '2026-03-17'
+    sku: 'GlobalStandard'
+    capacity: 100
+    retirementDate: '2027-03-18'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 1
+  }
+  {
+    name: 'gpt-5.4-mini'
+    publisher: 'OpenAI'
+    version: '2026-03-17'
+    sku: 'GlobalStandard'
+    capacity: 100
+    retirementDate: '2027-03-18'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 2
+  }
+  {
+    name: 'text-embedding-3-large'
+    publisher: 'OpenAI'
+    version: '1'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-04-15'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 0
+  }
+  {
+    name: 'text-embedding-3-large'
+    publisher: 'OpenAI'
+    version: '1'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-04-15'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 1
+  }
+  {
+    name: 'text-embedding-3-large'
+    publisher: 'OpenAI'
+    version: '1'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-04-15'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 2
+  }
+  {
+    name: 'gpt-4.1-mini'
+    publisher: 'OpenAI'
+    version: '2025-04-14'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2026-10-14'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 1
   }
 ]
 

@@ -1,0 +1,82 @@
+using './main.bicep'
+
+param location = 'swedencentral'
+param aiServices = 'foundry-agents'
+param uniqueSuffix = 'vfgg'
+// param modelName = 'gpt-4o'
+// param modelFormat = 'OpenAI'
+// param modelVersion = '2024-11-20'
+// param modelSkuName = 'GlobalStandard'
+// param modelCapacity = 30
+param firstProjectName = 'prj-foundry-agents'
+param projectDescription = 'A project for the AI Foundry account with network secured deployed Agent'
+param displayName = 'prj-foundry-agents'
+param peSubnetName = 'pe-subnet'
+
+// Resource IDs for existing resources
+// If you provide these, the deployment will use the existing resources instead of creating new ones
+param existingVnetResourceId = ''
+param vnetName = 'foundry-vnet'
+param agentSubnetName = 'agent-subnet'
+param aiSearchResourceId = '/subscriptions/dcbc1e3b-d166-4453-8a07-5c6dd0e2b511/resourceGroups/rg-foundry/providers/Microsoft.Search/searchServices/fl-swedencentral-aisearch'
+param azureStorageAccountResourceId = '/subscriptions/dcbc1e3b-d166-4453-8a07-5c6dd0e2b511/resourceGroups/rg-ai-plat-lz-dev/providers/Microsoft.Storage/storageAccounts/funcrfp01oswxbuiwdms54'
+param azureCosmosDBAccountResourceId = '/subscriptions/dcbc1e3b-d166-4453-8a07-5c6dd0e2b511/resourceGroups/rg-ai-plat-lz-dev/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-rfp01oswxbuiwdms54'
+
+// API Management configuration (optional)
+param apiManagementResourceId = '/subscriptions/dcbc1e3b-d166-4453-8a07-5c6dd0e2b511/resourceGroups/rg-ai-plat-lz-dev/providers/Microsoft.ApiManagement/service/apim-rfp01oswxbuiwdms54'
+
+// Application Insights tracing configuration
+// Set newOrExistingApplicationInsights to 'existing' and provide applicationInsightsResourceId to reuse an existing component.
+param newOrExistingApplicationInsights = 'new'
+param applicationInsightsName = 'appi-foundry-agents-vfgg'
+param applicationInsightsResourceId = ''
+param logAnalyticsWorkspaceName = 'log-foundry-agents-vfgg'
+param applicationInsightsRetentionInDays = 90
+
+// Pass the DNS zone map here
+// Leave empty to create new DNS zone, add the resource group of existing DNS zone to use it
+param existingDnsZones = {
+  'privatelink.services.ai.azure.com': 'rg-hub-connectivity-test'
+  'privatelink.openai.azure.com': 'rg-hub-connectivity-test'
+  'privatelink.cognitiveservices.azure.com': 'rg-hub-connectivity-test'               
+  'privatelink.search.windows.net': 'rg-hub-connectivity-test'           
+  'privatelink.blob.core.windows.net': 'rg-hub-connectivity-test'                            
+  'privatelink.documents.azure.com': 'rg-hub-connectivity-test'
+  'privatelink.azure-api.net': 'rg-hub-connectivity-test'                       
+}
+
+//DNSZones names for validating if they exist
+param dnsZoneNames = [
+  'privatelink.services.ai.azure.com'
+  'privatelink.openai.azure.com'
+  'privatelink.cognitiveservices.azure.com'
+  'privatelink.search.windows.net'
+  'privatelink.blob.core.windows.net'
+  'privatelink.documents.azure.com'
+  'privatelink.azure-api.net'
+]
+
+
+// Network configuration: only used when existingVnetResourceId is not provided
+// These addresses are only used when creating a new VNet and subnets
+// If you provide existingVnetResourceId, these values will be ignored
+param vnetAddressPrefix = '192.168.0.0/16'
+param agentSubnetPrefix = '192.168.0.0/24'
+param peSubnetPrefix = '192.168.1.0/24'
+
+// Optional Windows jumpbox configuration.
+// When enableJumpbox is true, supply jumpboxAdminPassword at deployment time; do not commit it.
+param enableJumpbox = true
+param bastionSubnetPrefix = '192.168.2.0/26'
+param jumpboxSubnetName = 'jumpbox-subnet'
+param jumpboxSubnetPrefix = '192.168.3.0/24'
+param jumpboxVmName = 'vm-foundry-jumpbox'
+param jumpboxVmSize = 'Standard_B2s'
+param jumpboxAdminUsername = 'azureuser'
+param bastionName = 'bas-foundry-jumpbox'
+param bastionSku = 'Basic'
+param bastionPublicIpName = 'pip-foundry-bastion'
+param jumpboxNsgName = 'nsg-foundry-jumpbox'
+param jumpboxNicName = 'nic-foundry-jumpbox'
+param jumpboxWindowsImageSku = '2022-datacenter-azure-edition'
+param jumpboxOsDiskSku = 'StandardSSD_LRS'
