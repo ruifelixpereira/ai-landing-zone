@@ -1,0 +1,143 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "eastus2"
+    },
+    "aiServices": {
+      "value": ""
+    },
+    "modelName": {
+      "value": ""
+    },
+    "modelFormat": {
+      "value": ""
+    },
+    "modelVersion": {
+      "value": ""
+    },
+    "modelSkuName": {
+      "value": ""
+    },
+    "modelCapacity": {
+      "value": 0
+    },
+    "uniqueSuffix": {
+      "value": ""
+    },
+    "firstProjectName": {
+      "value": ""
+    },
+    "projectDescription": {
+      "value": ""
+    },
+    "displayName": {
+      "value": ""
+    },
+    "vnetName": {
+      "value": ""
+    },
+    "agentSubnetName": {
+      "value": ""
+    },
+    "peSubnetName": {
+      "value": ""
+    },
+    "existingVnetResourceId": {
+      "value": ""
+    },
+    "vnetAddressPrefix": {
+      "value": ""
+    },
+    "agentSubnetPrefix": {
+      "value": ""
+    },
+    "peSubnetPrefix": {
+      "value": ""
+    },
+    "enableJumpbox": {
+      "value": false
+    },
+    "bastionSubnetPrefix": {
+      "value": ""
+    },
+    "jumpboxSubnetName": {
+      "value": "jumpbox-subnet"
+    },
+    "jumpboxSubnetPrefix": {
+      "value": ""
+    },
+    "jumpboxVmName": {
+      "value": ""
+    },
+    "jumpboxVmSize": {
+      "value": "Standard_B2s"
+    },
+    "jumpboxAdminUsername": {
+      "value": "azureuser"
+    },
+    "bastionName": {
+      "value": ""
+    },
+    "bastionSku": {
+      "value": "Basic"
+    },
+    "bastionPublicIpName": {
+      "value": ""
+    },
+    "jumpboxNsgName": {
+      "value": ""
+    },
+    "jumpboxNicName": {
+      "value": ""
+    },
+    "jumpboxWindowsImageSku": {
+      "value": "2022-datacenter-azure-edition"
+    },
+    "jumpboxOsDiskSku": {
+      "value": "StandardSSD_LRS"
+    },
+    "aiSearchResourceId": {
+      "value": ""
+    },
+    "azureStorageAccountResourceId": {
+      "value": ""
+    },
+    "azureCosmosDBAccountResourceId": {
+      "value": ""
+    },
+    "projectCapHost": {
+      "value": ""
+    },
+    "apiManagementResourceId": {
+      "value": ""
+    },
+    "newOrExistingApplicationInsights": {
+      "value": "new"
+    },
+    "applicationInsightsName": {
+      "value": ""
+    },
+    "applicationInsightsResourceId": {
+      "value": ""
+    },
+    "logAnalyticsWorkspaceName": {
+      "value": ""
+    },
+    "applicationInsightsRetentionInDays": {
+      "value": 90
+    },
+    "existingDnsZones": {
+      "value": {
+        "privatelink.services.ai.azure.com": "",
+        "privatelink.openai.azure.com": "",
+        "privatelink.cognitiveservices.azure.com": "",
+        "privatelink.search.windows.net": "",
+        "privatelink.blob.core.windows.net": "",
+        "privatelink.documents.azure.com": "",
+        "privatelink.azure-api.net": ""
+      }
+    }
+  }
+}

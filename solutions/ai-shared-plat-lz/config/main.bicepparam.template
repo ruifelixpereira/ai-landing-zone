@@ -125,7 +125,7 @@ param redisPublicNetworkAccess = readEnvironmentVariable('REDIS_PUBLIC_NETWORK_A
 param createAppInsightsDashboards = bool(readEnvironmentVariable('CREATE_DASHBOARDS', 'false'))
 param enableAIModelInference = bool(readEnvironmentVariable('ENABLE_AI_MODEL_INFERENCE', 'true'))
 param enableDocumentIntelligence = bool(readEnvironmentVariable('ENABLE_DOCUMENT_INTELLIGENCE', 'true'))
-param enableAzureAISearch = bool(readEnvironmentVariable('ENABLE_AZURE_AI_SEARCH', 'false'))
+param enableAzureAISearch = bool(readEnvironmentVariable('ENABLE_AZURE_AI_SEARCH', 'true'))
 param enableAIGatewayPiiRedaction = bool(readEnvironmentVariable('ENABLE_PII_REDACTION', 'true'))
 param enableOpenAIRealtime = bool(readEnvironmentVariable('ENABLE_OPENAI_REALTIME', 'true'))
 param enableAIFoundry = bool(readEnvironmentVariable('ENABLE_AI_FOUNDRY', 'true'))
@@ -208,12 +208,144 @@ param aiFoundryModelsConfig = [
     name: 'gpt-4.1'
     publisher: 'OpenAI'
     version: '2025-04-14'
-    sku: 'GlobalStandard'
+    sku: 'DataZoneStandard'
     capacity: 100
     retirementDate: '2026-10-14'
     apiVersion: '2025-04-01-preview'
     timeout: 180
     aiserviceIndex: 0
+  }
+  {
+    name: 'gpt-4.1'
+    publisher: 'OpenAI'
+    version: '2025-04-14'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2026-10-14'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 1
+  }
+  {
+    name: 'gpt-4.1'
+    publisher: 'OpenAI'
+    version: '2025-04-14'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2026-10-14'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 2
+  }
+  {
+    name: 'gpt-5.4'
+    publisher: 'OpenAI'
+    version: '2026-03-05'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-03-05'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 0
+  }
+  {
+    name: 'gpt-5.4'
+    publisher: 'OpenAI'
+    version: '2026-03-05'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-03-05'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 1
+  }
+  {
+    name: 'gpt-5.4'
+    publisher: 'OpenAI'
+    version: '2026-03-05'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-03-05'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 2
+  }
+  {
+    name: 'gpt-5.4-mini'
+    publisher: 'OpenAI'
+    version: '2026-03-17'
+    sku: 'GlobalStandard'
+    capacity: 100
+    retirementDate: '2027-03-18'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 0
+  }
+  {
+    name: 'gpt-5.4-mini'
+    publisher: 'OpenAI'
+    version: '2026-03-17'
+    sku: 'GlobalStandard'
+    capacity: 100
+    retirementDate: '2027-03-18'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 1
+  }
+  {
+    name: 'gpt-5.4-mini'
+    publisher: 'OpenAI'
+    version: '2026-03-17'
+    sku: 'GlobalStandard'
+    capacity: 100
+    retirementDate: '2027-03-18'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 2
+  }
+  {
+    name: 'text-embedding-3-large'
+    publisher: 'OpenAI'
+    version: '1'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-04-15'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 0
+  }
+  {
+    name: 'text-embedding-3-large'
+    publisher: 'OpenAI'
+    version: '1'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-04-15'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 1
+  }
+  {
+    name: 'text-embedding-3-large'
+    publisher: 'OpenAI'
+    version: '1'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-04-15'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 2
+  }
+  {
+    name: 'gpt-4.1-mini'
+    publisher: 'OpenAI'
+    version: '2025-04-14'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2026-10-14'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 1
   }
 ]
 

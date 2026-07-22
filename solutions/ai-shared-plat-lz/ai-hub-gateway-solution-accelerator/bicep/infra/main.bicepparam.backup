@@ -6,6 +6,7 @@ using './main.bicep'
 param environmentName = readEnvironmentVariable('AZURE_ENV_NAME', 'citadel-dev')
 param location = readEnvironmentVariable('AZURE_LOCATION', 'swedencentral')
 param apicLocation = readEnvironmentVariable('APIC_LOCATION', 'swedencentral')
+param customNaming = readEnvironmentVariable('CUSTOM_NAMING', '')
 param tags = {
   'azd-env-name': readEnvironmentVariable('AZURE_ENV_NAME', 'citadel-dev')
   SecurityControl: 'Ignore'
@@ -124,7 +125,7 @@ param redisPublicNetworkAccess = readEnvironmentVariable('REDIS_PUBLIC_NETWORK_A
 param createAppInsightsDashboards = bool(readEnvironmentVariable('CREATE_DASHBOARDS', 'false'))
 param enableAIModelInference = bool(readEnvironmentVariable('ENABLE_AI_MODEL_INFERENCE', 'true'))
 param enableDocumentIntelligence = bool(readEnvironmentVariable('ENABLE_DOCUMENT_INTELLIGENCE', 'true'))
-param enableAzureAISearch = bool(readEnvironmentVariable('ENABLE_AZURE_AI_SEARCH', 'false'))
+param enableAzureAISearch = bool(readEnvironmentVariable('ENABLE_AZURE_AI_SEARCH', 'true'))
 param enableAIGatewayPiiRedaction = bool(readEnvironmentVariable('ENABLE_PII_REDACTION', 'true'))
 param enableOpenAIRealtime = bool(readEnvironmentVariable('ENABLE_OPENAI_REALTIME', 'true'))
 param enableAIFoundry = bool(readEnvironmentVariable('ENABLE_AI_FOUNDRY', 'true'))
@@ -195,12 +196,6 @@ param aiFoundryInstances = [
     customSubDomainName: ''
     defaultProjectName: 'citadel-governance-project'
   }
-  {
-    name: readEnvironmentVariable('AI_FOUNDRY_RESOURCE_NAME', '')
-    location: 'eastus2'
-    customSubDomainName: ''
-    defaultProjectName: 'citadel-governance-project'
-  }
 ]
 
 // AI Foundry model deployments configuration
@@ -213,7 +208,7 @@ param aiFoundryModelsConfig = [
     name: 'gpt-4.1'
     publisher: 'OpenAI'
     version: '2025-04-14'
-    sku: 'GlobalStandard'
+    sku: 'DataZoneStandard'
     capacity: 100
     retirementDate: '2026-10-14'
     apiVersion: '2025-04-01-preview'
@@ -221,31 +216,69 @@ param aiFoundryModelsConfig = [
     aiserviceIndex: 0
   }
   {
-    name: 'DeepSeek-R1'
-    publisher: 'DeepSeek'
-    version: '1'
-    sku: 'GlobalStandard'
-    capacity: 1
-    retirementDate: '2099-12-30'
-    inferenceApiVersion: '2024-05-01-preview'
-    aiserviceIndex: 0
-  }
-  {
-    name: 'text-embedding-3-large'
+    name: 'gpt-4.1'
     publisher: 'OpenAI'
-    version: '1'
-    sku: 'GlobalStandard'
+    version: '2025-04-14'
+    sku: 'DataZoneStandard'
     capacity: 100
-    retirementDate: '2027-04-14'
+    retirementDate: '2026-10-14'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 1
+  }
+  {
+    name: 'gpt-4.1'
+    publisher: 'OpenAI'
+    version: '2025-04-14'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2026-10-14'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 2
+  }
+  {
+    name: 'gpt-5.4'
+    publisher: 'OpenAI'
+    version: '2026-03-05'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-03-05'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
     aiserviceIndex: 0
   }
   {
-    name: 'Mistral-Large-3'
-    publisher: 'Mistral AI'
-    version: '1'
+    name: 'gpt-5.4'
+    publisher: 'OpenAI'
+    version: '2026-03-05'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-03-05'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 1
+  }
+  {
+    name: 'gpt-5.4'
+    publisher: 'OpenAI'
+    version: '2026-03-05'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-03-05'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 2
+  }
+  {
+    name: 'gpt-5.4-mini'
+    publisher: 'OpenAI'
+    version: '2026-03-17'
     sku: 'GlobalStandard'
     capacity: 100
-    retirementDate: '2099-12-30'
+    retirementDate: '2027-03-18'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
     aiserviceIndex: 0
   }
   {
@@ -254,8 +287,10 @@ param aiFoundryModelsConfig = [
     version: '2026-03-17'
     sku: 'GlobalStandard'
     capacity: 100
-    retirementDate: '2026-09-30'
-    aiserviceIndex: 0
+    retirementDate: '2027-03-18'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 1
   }
   {
     name: 'gpt-5.4-mini'
@@ -263,35 +298,53 @@ param aiFoundryModelsConfig = [
     version: '2026-03-17'
     sku: 'GlobalStandard'
     capacity: 100
-    retirementDate: '2026-09-30'
-    aiserviceIndex: 1
+    retirementDate: '2027-03-18'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 2
   }
   {
-    name: 'gpt-5.2'
+    name: 'text-embedding-3-large'
     publisher: 'OpenAI'
-    version: '2025-12-11'
-    sku: 'GlobalStandard'
+    version: '1'
+    sku: 'DataZoneStandard'
     capacity: 100
-    retirementDate: '2027-02-05'
-    aiserviceIndex: 1
+    retirementDate: '2027-04-15'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 0
   }
   {
-    name: 'DeepSeek-R1'
-    publisher: 'DeepSeek'
+    name: 'text-embedding-3-large'
+    publisher: 'OpenAI'
     version: '1'
-    sku: 'GlobalStandard'
-    capacity: 1
-    retirementDate: '2099-12-30'
-    inferenceApiVersion: '2024-05-01-preview'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2027-04-15'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
     aiserviceIndex: 1
   }
   {
     name: 'text-embedding-3-large'
     publisher: 'OpenAI'
     version: '1'
-    sku: 'GlobalStandard'
+    sku: 'DataZoneStandard'
     capacity: 100
-    retirementDate: '2027-04-14'
+    retirementDate: '2027-04-15'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
+    aiserviceIndex: 2
+  }
+  {
+    name: 'gpt-4.1-mini'
+    publisher: 'OpenAI'
+    version: '2025-04-14'
+    sku: 'DataZoneStandard'
+    capacity: 100
+    retirementDate: '2026-10-14'
+    apiVersion: '2025-04-01-preview'
+    timeout: 180
     aiserviceIndex: 1
   }
 ]
