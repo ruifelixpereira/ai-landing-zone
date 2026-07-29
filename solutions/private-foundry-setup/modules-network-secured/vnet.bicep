@@ -35,8 +35,11 @@ param agentSubnetPrefix string = ''
 @description('Address prefix for the private endpoint subnet')
 param peSubnetPrefix string = ''
 
-@description('Create optional subnets required by the Windows jumpbox and Azure Bastion.')
+@description('Create the optional subnet required by the Windows jumpbox.')
 param enableJumpbox bool = false
+
+@description('Create the optional subnet required by Azure Bastion.')
+param enableBastion bool = true
 
 @description('Address prefix for Azure Bastion subnet. Azure Bastion requires the subnet name AzureBastionSubnet and /26 or larger.')
 param bastionSubnetPrefix string = ''
@@ -77,13 +80,16 @@ var baseSubnets = [
   }
 ]
 
-var jumpboxSubnets = enableJumpbox ? [
+var bastionSubnets = enableBastion ? [
   {
     name: 'AzureBastionSubnet'
     properties: {
       addressPrefix: bastionSubnet
     }
   }
+] : []
+
+var jumpboxSubnets = enableJumpbox ? [
   {
     name: jumpboxSubnetName
     properties: {
@@ -101,7 +107,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         vnetAddress
       ]
     }
-    subnets: concat(baseSubnets, jumpboxSubnets)
+    subnets: concat(baseSubnets, bastionSubnets, jumpboxSubnets)
   }
 }
 // Output variables
@@ -109,9 +115,9 @@ output peSubnetName string = peSubnetName
 output agentSubnetName string = agentSubnetName
 output agentSubnetId string = '${virtualNetwork.id}/subnets/${agentSubnetName}'
 output peSubnetId string = '${virtualNetwork.id}/subnets/${peSubnetName}'
-output bastionSubnetId string = enableJumpbox ? '${virtualNetwork.id}/subnets/AzureBastionSubnet' : ''
+output bastionSubnetId string = enableBastion ? '${virtualNetwork.id}/subnets/AzureBastionSubnet' : ''
 output jumpboxSubnetId string = enableJumpbox ? '${virtualNetwork.id}/subnets/${jumpboxSubnetName}' : ''
-output bastionSubnetPrefix string = enableJumpbox ? bastionSubnet : ''
+output bastionSubnetPrefix string = enableBastion ? bastionSubnet : ''
 output jumpboxSubnetPrefix string = enableJumpbox ? jumpboxSubnet : ''
 output virtualNetworkName string = virtualNetwork.name
 output virtualNetworkId string = virtualNetwork.id

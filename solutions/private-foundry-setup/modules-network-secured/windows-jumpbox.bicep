@@ -24,6 +24,9 @@ param bastionSubnetId string
 @description('Address prefix of AzureBastionSubnet. Used to restrict inbound RDP to Bastion only.')
 param bastionSubnetPrefix string
 
+@description('Create Azure Bastion and its public IP for jumpbox access.')
+param enableBastion bool = true
+
 @description('Name of the Azure Bastion host to create.')
 param bastionName string
 
@@ -36,6 +39,9 @@ param bastionSku string = 'Basic'
 
 @description('Name of the Standard public IP address used by Azure Bastion.')
 param bastionPublicIpName string
+
+@description('Source address prefix allowed to RDP to the jumpbox when Azure Bastion is not enabled.')
+param jumpboxRdpSourceAddressPrefix string = 'VirtualNetwork'
 
 @description('Name of the network security group attached to the jumpbox NIC.')
 param jumpboxNsgName string
@@ -58,7 +64,7 @@ param windowsImageSku string = '2022-datacenter-azure-edition'
 ])
 param osDiskSku string = 'StandardSSD_LRS'
 
-resource bastionPublicIp 'Microsoft.Network/publicIPAddresses@2024-07-01' = {
+resource bastionPublicIp 'Microsoft.Network/publicIPAddresses@2024-07-01' = if (enableBastion) {
   name: bastionPublicIpName
   location: location
   sku: {
@@ -69,7 +75,7 @@ resource bastionPublicIp 'Microsoft.Network/publicIPAddresses@2024-07-01' = {
   }
 }
 
-resource bastionHost 'Microsoft.Network/bastionHosts@2024-07-01' = {
+resource bastionHost 'Microsoft.Network/bastionHosts@2024-07-01' = if (enableBastion) {
   name: bastionName
   location: location
   sku: {
@@ -98,7 +104,7 @@ resource jumpboxNsg 'Microsoft.Network/networkSecurityGroups@2024-07-01' = {
   properties: {
     securityRules: [
       {
-        name: 'AllowRdpFromAzureBastionSubnet'
+        name: 'AllowRdpFromConfiguredSource'
         properties: {
           priority: 100
           direction: 'Inbound'
@@ -106,7 +112,20 @@ resource jumpboxNsg 'Microsoft.Network/networkSecurityGroups@2024-07-01' = {
           protocol: 'Tcp'
           sourcePortRange: '*'
           destinationPortRange: '3389'
-          sourceAddressPrefix: bastionSubnetPrefix
+          sourceAddressPrefix: enableBastion ? bastionSubnetPrefix : jumpboxRdpSourceAddressPrefix
+          destinationAddressPrefix: '*'
+        }
+      }
+      {
+        name: 'DenyRdpFromOtherSources'
+        properties: {
+          priority: 110
+          direction: 'Inbound'
+          access: 'Deny'
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '3389'
+          sourceAddressPrefix: '*'
           destinationAddressPrefix: '*'
         }
       }
@@ -204,6 +223,6 @@ resource jumpboxVm 'Microsoft.Compute/virtualMachines@2024-11-01' = {
 
 output jumpboxVmName string = jumpboxVm.name
 output jumpboxVmId string = jumpboxVm.id
-output bastionName string = bastionHost.name
-output bastionId string = bastionHost.id
+output bastionName string = enableBastion ? bastionHost!.name : ''
+output bastionId string = enableBastion ? bastionHost!.id : ''
 output jumpboxNicId string = jumpboxNic.id

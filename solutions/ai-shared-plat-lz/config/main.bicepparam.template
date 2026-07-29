@@ -192,9 +192,21 @@ param aiSearchInstances = []
 param aiFoundryInstances = [
   {
     name: readEnvironmentVariable('AI_FOUNDRY_RESOURCE_NAME', '')
-    location: readEnvironmentVariable('AZURE_LOCATION', 'eastus')
+    location: readEnvironmentVariable('AZURE_LOCATION', 'swedencentral')
     customSubDomainName: ''
-    defaultProjectName: 'citadel-governance-project'
+    defaultProjectName: 'citadel-foundry-models-swedencentral'
+  }
+  {
+    name: readEnvironmentVariable('AI_FOUNDRY_RESOURCE_NAME_2', '')
+    location: 'italynorth'
+    customSubDomainName: ''
+    defaultProjectName: 'citadel-foundry-models-italynorth'
+  }
+  {
+    name: readEnvironmentVariable('AI_FOUNDRY_RESOURCE_NAME_3', '')
+    location: 'polandcentral'
+    customSubDomainName: ''
+    defaultProjectName: 'citadel-foundry-models-polandcentral'
   }
 ]
 

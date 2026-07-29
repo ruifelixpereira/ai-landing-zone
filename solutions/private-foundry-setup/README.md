@@ -159,14 +159,16 @@ Note: If not provided, the following resources will be created automatically for
 | `peSubnetPrefix` | Address prefix for PE subnet | `192.168.1.0/24` | No |
 | `existingVnetResourceId` | Full ARM Resource ID of an existing VNet | `''` (creates new) | No |
 | `vnetAddressPrefix` | Address space for new VNet | `192.168.0.0/16` | No |
-| `enableJumpbox` | Create a private Windows jumpbox VM reachable through Azure Bastion. | `false` | No |
-| `bastionSubnetPrefix` | Address prefix for `AzureBastionSubnet`; must be /26 or larger. | Derived from VNet for new VNet | Required when `enableJumpbox=true` for existing VNets |
+| `enableJumpbox` | Create a private Windows jumpbox VM without a public IP. | `false` | No |
+| `enableBastion` | Create Azure Bastion and `AzureBastionSubnet` for jumpbox access. | `true` | No |
+| `bastionSubnetPrefix` | Address prefix for `AzureBastionSubnet`; must be /26 or larger. | Derived from VNet for new VNet | Required when `enableBastion=true` for existing VNets |
 | `jumpboxSubnetName` | Subnet name for the Windows jumpbox VM. | `jumpbox-subnet` | No |
 | `jumpboxSubnetPrefix` | Address prefix for the Windows jumpbox subnet. | Derived from VNet for new VNet | Required when `enableJumpbox=true` for existing VNets |
 | `jumpboxVmName` | Optional Windows jumpbox VM name. | Generated from account name | No |
 | `jumpboxVmSize` | Windows jumpbox VM size. | `Standard_B2s` | No |
 | `jumpboxAdminUsername` | Admin username for the Windows jumpbox VM. | `azureuser` | Required when `enableJumpbox=true` |
 | `jumpboxAdminPassword` | Secure admin password for the Windows jumpbox VM. Supply at deployment time; do not commit it. | `''` | Required when `enableJumpbox=true` |
+| `jumpboxRdpSourceAddressPrefix` | Source address prefix allowed to RDP to the jumpbox when Bastion is disabled. | `VirtualNetwork` | No |
 | `bastionName` | Optional Azure Bastion host name. | Generated from account name | No |
 | `bastionSku` | Azure Bastion SKU. | `Basic` | No |
 | `bastionPublicIpName` | Optional Standard public IP name for Azure Bastion. | Generated from account name | No |
@@ -181,31 +183,31 @@ Note: If not provided, the following resources will be created automatically for
 | `applicationInsightsResourceId` | ARM Resource ID of an existing Application Insights resource for Foundry tracing. | `''` (creates new) | No |
 | `logAnalyticsWorkspaceName` | Name of the Log Analytics workspace to create for new workspace-based Application Insights. | `log-<accountName>` | No |
 | `applicationInsightsRetentionInDays` | Retention in days for the new Log Analytics workspace and Application Insights component. | `90` | No |
-| `dnsZonesSubscriptionId` | Subscription ID for existing DNS zones | `''` (current sub) | No |
-| `existingDnsZones` | Map of DNS zone names to resource groups | All empty (creates new) | No |
+| `existingDnsZones` | Map of DNS zone names to full ARM resource IDs | All empty (creates new) | No |
 
 #### BYO Resource Details
 
 1. **Use Existing Virtual Network and Subnets**
 
-To use an existing VNet and subnets, set the existingVnetResourceId parameter to the full Azure Resource ID of the target VNet and its address range, and provide the names of the two required subnets.  If the existing VNet is associated with private DNS zones, set the existingDnsZones parameter to the resource group name in which the zones are located. For example:
+To use an existing VNet and subnets, set the existingVnetResourceId parameter to the full Azure Resource ID of the target VNet and its address range, and provide the names of the two required subnets. If the existing VNet is associated with private DNS zones, set the existingDnsZones parameter values to the full ARM resource IDs of those zones. For example:
 - param existingVnetResourceId = "/subscriptions/<subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Network/virtualNetworks/<vnet-name>"
 - param agentSubnetName string = 'agent-subnet' //optional, default is 'agent-subnet'
 - param agentSubnetPrefix string = '192.168.0.0/24' //optional, default is '192.168.0.0/24'
 - param peSubnetName string = 'pe-subnet' //optional, default is 'pe-subnet'
 - param peSubnetPrefix string = '192.168.1.0/24' //optional, default is '192.168.1.0/24'
-- param dnsZonesSubscriptionId string = '' //optional, leave empty to use current subscription, or set to a subscription ID if DNS zones are in a different subscription
 - param existingDnsZones = {
        
-         'privatelink.services.ai.azure.com': 'privzoneRG' //add resource group name where your private DNS zone is located
+         'privatelink.services.ai.azure.com': '/subscriptions/<dns-subscription-id>/resourceGroups/<dns-resource-group-name>/providers/Microsoft.Network/privateDnsZones/privatelink.services.ai.azure.com' //full resource ID of the existing private DNS zone
        
          'privatelink.openai.azure.com': '' //Leave empty to create new private dns zone... }
 
 💡 If subnets information is provided then make sure it exist within the specified VNet to avoid deployment errors. If subnet information is not provided, the template will create subnets with the default address space.
 
-💡 **Cross-Subscription DNS Zones**: All DNS zones specified in `existingDnsZones` will be referenced from the subscription specified in `dnsZonesSubscriptionId`. Leave this parameter empty (default) to use the current deployment subscription, or set it to a subscription ID if your DNS zones are located in a different subscription.
+💡 **Cross-Subscription DNS Zones**: Existing DNS zones can be in any subscription as long as each non-empty `existingDnsZones` value is the full private DNS zone resource ID and the deployment identity has permission to create virtual network links in that DNS zone scope.
 
-⚠️ **Important**: When `dnsZonesSubscriptionId` is set to a different subscription, ALL DNS zones in `existingDnsZones` must have resource groups specified (non-empty values). The template does not support creating new DNS zones in a different subscription. Empty resource groups are only allowed when creating zones in the current deployment subscription.
+⚠️ **Important**: Empty `existingDnsZones` values create new DNS zones in the current deployment resource group. Existing zones are referenced individually from their full resource IDs.
+
+⚠️ **Migration note**: Earlier versions accepted resource group names as `existingDnsZones` values. Update those values to full private DNS zone resource IDs before deploying this version.
 
 
 2. **Use an existing Azure Cosmos DB for NoSQL**
@@ -265,18 +267,24 @@ When no existing resource ID is provided, the template creates a workspace-based
 
 7. **Create a private Windows jumpbox for portal access**
 
-Set `enableJumpbox` to `true` to create a Windows VM without a public IP and an Azure Bastion host for browser-based RDP access from the Azure portal.
+Set `enableJumpbox` to `true` to create a Windows VM without a public IP. Azure Bastion remains enabled by default for compatibility with the existing jumpbox behavior. Set `enableBastion` to `false` when the VNet already has Bastion or when the jumpbox is reachable through another private network path.
 
 For a new VNet, the template can derive jumpbox subnet prefixes from `vnetAddressPrefix`, or you can provide them explicitly:
 - param enableJumpbox = true
+- param enableBastion = false
+- param jumpboxRdpSourceAddressPrefix = 'VirtualNetwork'
+
+To create Azure Bastion as the managed entry point, set `enableBastion` to `true` and provide a Bastion subnet prefix when needed:
+- param enableJumpbox = true
+- param enableBastion = true
 - param bastionSubnetPrefix = '192.168.2.0/26'
 - param jumpboxSubnetPrefix = '192.168.3.0/24'
 
-For an existing VNet, provide explicit non-overlapping `bastionSubnetPrefix` and `jumpboxSubnetPrefix` values. Azure Bastion requires a subnet named exactly `AzureBastionSubnet`, and only one Bastion host is supported per VNet. Keep `enableJumpbox` set to `false` if the VNet already has Bastion.
+For an existing VNet, provide explicit non-overlapping `jumpboxSubnetPrefix` and, when `enableBastion=true`, `bastionSubnetPrefix` values. Azure Bastion requires a subnet named exactly `AzureBastionSubnet`, and only one Bastion host is supported per VNet. Keep `enableBastion` set to `false` if the VNet already has Bastion or you do not want Bastion created.
 
 > **Important:** Supply `jumpboxAdminPassword` securely at deployment time. Do not commit it to `main.bicepparam`, `azuredeploy.parameters.json`, or source control.
 
-> **Networking note:** The jumpbox VM has no public IP. Azure Bastion uses a Standard public IP as the managed entry point. The VM still needs outbound HTTPS to reach `ai.azure.com`, Microsoft Entra sign-in, and Azure management endpoints. Private Foundry endpoints resolve privately only if VNet DNS is configured to resolve the linked private DNS zones.
+> **Networking note:** The jumpbox VM has no public IP. When `enableBastion=false`, no `AzureBastionSubnet`, Bastion host, or Bastion public IP is created; the jumpbox NSG allows RDP only from `jumpboxRdpSourceAddressPrefix`. The VM still needs outbound HTTPS to reach `ai.azure.com`, Microsoft Entra sign-in, and Azure management endpoints. Private Foundry endpoints resolve privately only if VNet DNS is configured to resolve the linked private DNS zones.
 
 ---
 

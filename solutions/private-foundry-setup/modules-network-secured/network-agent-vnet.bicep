@@ -28,8 +28,11 @@ param agentSubnetPrefix string = ''
 @description('Address prefix for the private endpoint subnet')
 param peSubnetPrefix string = ''
 
-@description('Create optional subnets required by the Windows jumpbox and Azure Bastion.')
+@description('Create the optional subnet required by the Windows jumpbox.')
 param enableJumpbox bool = false
+
+@description('Create the optional subnet required by Azure Bastion.')
+param enableBastion bool = true
 
 @description('Address prefix for Azure Bastion subnet. Azure Bastion requires the subnet name AzureBastionSubnet and /26 or larger.')
 param bastionSubnetPrefix string = ''
@@ -52,6 +55,7 @@ module newVNet 'vnet.bicep' = if (!useExistingVnet) {
     agentSubnetPrefix: agentSubnetPrefix
     peSubnetPrefix: peSubnetPrefix
     enableJumpbox: enableJumpbox
+    enableBastion: enableBastion
     bastionSubnetPrefix: bastionSubnetPrefix
     jumpboxSubnetName: jumpboxSubnetName
     jumpboxSubnetPrefix: jumpboxSubnetPrefix
@@ -70,6 +74,7 @@ module existingVNet 'existing-vnet.bicep' = if (useExistingVnet) {
     agentSubnetPrefix: agentSubnetPrefix
     peSubnetPrefix: peSubnetPrefix
     enableJumpbox: enableJumpbox
+    enableBastion: enableBastion
     bastionSubnetPrefix: bastionSubnetPrefix
     jumpboxSubnetName: jumpboxSubnetName
     jumpboxSubnetPrefix: jumpboxSubnetPrefix
@@ -85,7 +90,7 @@ output agentSubnetName string = agentSubnetName
 output peSubnetName string = peSubnetName
 output agentSubnetId string = useExistingVnet ? existingVNet!.outputs.agentSubnetId : newVNet!.outputs.agentSubnetId
 output peSubnetId string = useExistingVnet ? existingVNet!.outputs.peSubnetId : newVNet!.outputs.peSubnetId
-output bastionSubnetId string = enableJumpbox ? (useExistingVnet ? existingVNet!.outputs.bastionSubnetId : newVNet!.outputs.bastionSubnetId) : ''
+output bastionSubnetId string = enableBastion ? (useExistingVnet ? existingVNet!.outputs.bastionSubnetId : newVNet!.outputs.bastionSubnetId) : ''
 output jumpboxSubnetId string = enableJumpbox ? (useExistingVnet ? existingVNet!.outputs.jumpboxSubnetId : newVNet!.outputs.jumpboxSubnetId) : ''
-output bastionSubnetPrefix string = enableJumpbox ? (useExistingVnet ? existingVNet!.outputs.bastionSubnetPrefix : newVNet!.outputs.bastionSubnetPrefix) : ''
+output bastionSubnetPrefix string = enableBastion ? (useExistingVnet ? existingVNet!.outputs.bastionSubnetPrefix : newVNet!.outputs.bastionSubnetPrefix) : ''
 output jumpboxSubnetPrefix string = enableJumpbox ? (useExistingVnet ? existingVNet!.outputs.jumpboxSubnetPrefix : newVNet!.outputs.jumpboxSubnetPrefix) : ''
