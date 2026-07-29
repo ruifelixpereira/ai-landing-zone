@@ -34,15 +34,15 @@ param logAnalyticsWorkspaceName = 'log-foundry-agents-vfgg'
 param applicationInsightsRetentionInDays = 90
 
 // Pass the DNS zone map here
-// Leave empty to create new DNS zone, add the resource group of existing DNS zone to use it
+// Leave empty to create new DNS zone, or add the full resource ID of an existing DNS zone to use it
 param existingDnsZones = {
-  'privatelink.services.ai.azure.com': 'rg-hub-connectivity-test'
-  'privatelink.openai.azure.com': 'rg-hub-connectivity-test'
-  'privatelink.cognitiveservices.azure.com': 'rg-hub-connectivity-test'               
-  'privatelink.search.windows.net': 'rg-hub-connectivity-test'           
-  'privatelink.blob.core.windows.net': 'rg-hub-connectivity-test'                            
-  'privatelink.documents.azure.com': 'rg-hub-connectivity-test'
-  'privatelink.azure-api.net': 'rg-hub-connectivity-test'                       
+  'privatelink.services.ai.azure.com': '/subscriptions/<dns-subscription-id>/resourceGroups/rg-hub-connectivity-test/providers/Microsoft.Network/privateDnsZones/privatelink.services.ai.azure.com'
+  'privatelink.openai.azure.com': '/subscriptions/<dns-subscription-id>/resourceGroups/rg-hub-connectivity-test/providers/Microsoft.Network/privateDnsZones/privatelink.openai.azure.com'
+  'privatelink.cognitiveservices.azure.com': '/subscriptions/<dns-subscription-id>/resourceGroups/rg-hub-connectivity-test/providers/Microsoft.Network/privateDnsZones/privatelink.cognitiveservices.azure.com'
+  'privatelink.search.windows.net': '/subscriptions/<dns-subscription-id>/resourceGroups/rg-hub-connectivity-test/providers/Microsoft.Network/privateDnsZones/privatelink.search.windows.net'
+  'privatelink.blob.core.windows.net': '/subscriptions/<dns-subscription-id>/resourceGroups/rg-hub-connectivity-test/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net'
+  'privatelink.documents.azure.com': '/subscriptions/<dns-subscription-id>/resourceGroups/rg-hub-connectivity-test/providers/Microsoft.Network/privateDnsZones/privatelink.documents.azure.com'
+  'privatelink.azure-api.net': '/subscriptions/<dns-subscription-id>/resourceGroups/rg-hub-connectivity-test/providers/Microsoft.Network/privateDnsZones/privatelink.azure-api.net'
 }
 
 //DNSZones names for validating if they exist
@@ -67,12 +67,14 @@ param peSubnetPrefix = '192.168.1.0/24'
 // Optional Windows jumpbox configuration.
 // When enableJumpbox is true, supply jumpboxAdminPassword at deployment time; do not commit it.
 param enableJumpbox = true
+param enableBastion = true
 param bastionSubnetPrefix = '192.168.2.0/26'
 param jumpboxSubnetName = 'jumpbox-subnet'
 param jumpboxSubnetPrefix = '192.168.3.0/24'
 param jumpboxVmName = 'vm-foundry-jumpbox'
 param jumpboxVmSize = 'Standard_B2s'
 param jumpboxAdminUsername = 'azureuser'
+param jumpboxRdpSourceAddressPrefix = 'VirtualNetwork'
 param bastionName = 'bas-foundry-jumpbox'
 param bastionSku = 'Basic'
 param bastionPublicIpName = 'pip-foundry-bastion'

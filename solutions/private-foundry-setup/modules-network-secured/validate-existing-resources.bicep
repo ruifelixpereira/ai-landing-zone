@@ -80,7 +80,7 @@ output apiManagementResourceGroupName string = apiManagementResourceGroupName
 
 // Adding DNS Zone Check
 
-@description('Object mapping DNS zone names to their resource group, or empty string to indicate creation')
+@description('Object mapping DNS zone names to full ARM resource IDs, or empty string to indicate creation')
 param existingDnsZones object
 
 @description('List of private DNS zone names to validate')

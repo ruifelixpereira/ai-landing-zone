@@ -86,8 +86,11 @@ param agentSubnetPrefix string = ''
 @description('Address prefix for the private endpoint subnet')
 param peSubnetPrefix string = ''
 
-@description('Set to true to create a Windows jumpbox VM accessible through Azure Bastion. The VM does not get a public IP.')
+@description('Set to true to create a private Windows jumpbox VM. The VM does not get a public IP.')
 param enableJumpbox bool = false
+
+@description('Set to true to create Azure Bastion and AzureBastionSubnet for jumpbox access. Defaults to true to preserve the existing jumpbox behavior.')
+param enableBastion bool = true
 
 @description('Address prefix for Azure Bastion subnet. Azure Bastion requires the subnet name AzureBastionSubnet and /26 or larger.')
 param bastionSubnetPrefix string = ''
@@ -110,6 +113,9 @@ param jumpboxAdminUsername string = 'azureuser'
 @secure()
 @description('Admin password for the Windows jumpbox VM. Required only when enableJumpbox is true.')
 param jumpboxAdminPassword string = ''
+
+@description('Source address prefix allowed to RDP to the jumpbox when Azure Bastion is not enabled. Use a private CIDR or service tag such as VirtualNetwork.')
+param jumpboxRdpSourceAddressPrefix string = 'VirtualNetwork'
 
 @description('Optional name of the Azure Bastion host. If empty, a name is generated from the Foundry account name.')
 param bastionName string = ''
@@ -179,7 +185,7 @@ param applicationInsightsRetentionInDays int = 90
 //@description('Optional: Resource group containing existing private DNS zones. If specified, DNS zones will not be created.')
 //param existingDnsZonesResourceGroup string = ''
 
-@description('Object mapping DNS zone names to their resource group, or empty string to indicate creation')
+@description('Object mapping DNS zone names to full ARM resource IDs, or empty string to indicate creation')
 param existingDnsZones object = {
   'privatelink.services.ai.azure.com': ''
   'privatelink.openai.azure.com': ''
@@ -217,6 +223,7 @@ var storagePassedIn = azureStorageAccountResourceId != ''
 var searchPassedIn = aiSearchResourceId != ''
 var cosmosPassedIn = azureCosmosDBAccountResourceId != ''
 var existingVnetPassedIn = existingVnetResourceId != ''
+var deployBastion = enableJumpbox && enableBastion
 
 
 var acsParts = split(aiSearchResourceId, '/')
@@ -255,6 +262,7 @@ module vnet 'modules-network-secured/network-agent-vnet.bicep' = {
     peSubnetPrefix: peSubnetPrefix
     existingVnetSubscriptionId: vnetSubscriptionId
     enableJumpbox: enableJumpbox
+    enableBastion: deployBastion
     bastionSubnetPrefix: bastionSubnetPrefix
     jumpboxSubnetName: jumpboxSubnetName
     jumpboxSubnetPrefix: jumpboxSubnetPrefix
@@ -273,9 +281,11 @@ module windowsJumpbox 'modules-network-secured/windows-jumpbox.bicep' = if (enab
     jumpboxSubnetId: vnet.outputs.jumpboxSubnetId
     bastionSubnetId: vnet.outputs.bastionSubnetId
     bastionSubnetPrefix: vnet.outputs.bastionSubnetPrefix
+    enableBastion: deployBastion
     bastionName: resolvedBastionName
     bastionSku: bastionSku
     bastionPublicIpName: resolvedBastionPublicIpName
+    jumpboxRdpSourceAddressPrefix: jumpboxRdpSourceAddressPrefix
     jumpboxNsgName: resolvedJumpboxNsgName
     jumpboxNicName: resolvedJumpboxNicName
     windowsImageSku: jumpboxWindowsImageSku
@@ -551,5 +561,5 @@ output logAnalyticsWorkspaceName string = applicationInsights.outputs.logAnalyti
 output logAnalyticsWorkspaceId string = applicationInsights.outputs.logAnalyticsWorkspaceId
 output jumpboxVmName string = enableJumpbox ? windowsJumpbox!.outputs.jumpboxVmName : ''
 output jumpboxVmId string = enableJumpbox ? windowsJumpbox!.outputs.jumpboxVmId : ''
-output bastionName string = enableJumpbox ? windowsJumpbox!.outputs.bastionName : ''
-output bastionId string = enableJumpbox ? windowsJumpbox!.outputs.bastionId : ''
+output bastionName string = deployBastion ? windowsJumpbox!.outputs.bastionName : ''
+output bastionId string = deployBastion ? windowsJumpbox!.outputs.bastionId : ''

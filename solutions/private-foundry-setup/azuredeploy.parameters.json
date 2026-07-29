@@ -59,6 +59,9 @@
     "enableJumpbox": {
       "value": false
     },
+    "enableBastion": {
+      "value": true
+    },
     "bastionSubnetPrefix": {
       "value": ""
     },
@@ -76,6 +79,9 @@
     },
     "jumpboxAdminUsername": {
       "value": "azureuser"
+    },
+    "jumpboxRdpSourceAddressPrefix": {
+      "value": "VirtualNetwork"
     },
     "bastionName": {
       "value": ""

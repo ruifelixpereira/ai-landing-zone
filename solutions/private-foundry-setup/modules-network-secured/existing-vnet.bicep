@@ -35,10 +35,13 @@ param agentSubnetPrefix string = ''
 @description('Address prefix for the private endpoint subnet (only needed if creating new subnet)')
 param peSubnetPrefix string = ''
 
-@description('Create optional subnets required by the Windows jumpbox and Azure Bastion.')
+@description('Create the optional subnet required by the Windows jumpbox.')
 param enableJumpbox bool = false
 
-@description('Address prefix for Azure Bastion subnet. Required for existing VNets when enableJumpbox is true; Azure Bastion requires /26 or larger.')
+@description('Create the optional subnet required by Azure Bastion.')
+param enableBastion bool = true
+
+@description('Address prefix for Azure Bastion subnet. Required for existing VNets when enableBastion is true; Azure Bastion requires /26 or larger.')
 param bastionSubnetPrefix string = ''
 
 @description('The name of the Windows jumpbox subnet')
@@ -95,8 +98,8 @@ module peSubnet 'subnet.bicep' = {
   ]
 }
 
-// Create Azure Bastion subnet only when the jumpbox is enabled.
-module bastionSubnet 'subnet.bicep' = if (enableJumpbox) {
+// Create Azure Bastion subnet only when Azure Bastion is enabled.
+module bastionSubnet 'subnet.bicep' = if (enableBastion) {
   name: 'bastion-subnet-${uniqueString(deployment().name, 'AzureBastionSubnet')}'
   scope: resourceGroup(vnetSubscriptionId, vnetResourceGroupName)
   params: {
@@ -110,8 +113,23 @@ module bastionSubnet 'subnet.bicep' = if (enableJumpbox) {
   ]
 }
 
+// Create the jumpbox subnet after the private endpoint subnet when Bastion is disabled.
+module jumpboxSubnetWithoutBastion 'subnet.bicep' = if (enableJumpbox && !enableBastion) {
+  name: 'jumpbox-subnet-${uniqueString(deployment().name, jumpboxSubnetName)}'
+  scope: resourceGroup(vnetSubscriptionId, vnetResourceGroupName)
+  params: {
+    vnetName: vnetName
+    subnetName: jumpboxSubnetName
+    addressPrefix: jumpboxSubnetSpaces
+    delegations: []
+  }
+  dependsOn: [
+    peSubnet
+  ]
+}
+
 // Create the jumpbox subnet after Bastion subnet to avoid concurrent subnet writes.
-module jumpboxSubnet 'subnet.bicep' = if (enableJumpbox) {
+module jumpboxSubnetWithBastion 'subnet.bicep' = if (enableJumpbox && enableBastion) {
   name: 'jumpbox-subnet-${uniqueString(deployment().name, jumpboxSubnetName)}'
   scope: resourceGroup(vnetSubscriptionId, vnetResourceGroupName)
   params: {
@@ -130,9 +148,9 @@ output peSubnetName string = peSubnetName
 output agentSubnetName string = agentSubnetName
 output agentSubnetId string = agentSubnet.outputs.subnetId
 output peSubnetId string = peSubnet.outputs.subnetId
-output bastionSubnetId string = enableJumpbox ? bastionSubnet!.outputs.subnetId : ''
-output jumpboxSubnetId string = enableJumpbox ? jumpboxSubnet!.outputs.subnetId : ''
-output bastionSubnetPrefix string = enableJumpbox ? bastionSubnetSpaces : ''
+output bastionSubnetId string = enableBastion ? bastionSubnet!.outputs.subnetId : ''
+output jumpboxSubnetId string = enableJumpbox ? (enableBastion ? jumpboxSubnetWithBastion!.outputs.subnetId : jumpboxSubnetWithoutBastion!.outputs.subnetId) : ''
+output bastionSubnetPrefix string = enableBastion ? bastionSubnetSpaces : ''
 output jumpboxSubnetPrefix string = enableJumpbox ? jumpboxSubnetSpaces : ''
 output virtualNetworkName string = existingVNet.name
 output virtualNetworkId string = existingVNet.id
