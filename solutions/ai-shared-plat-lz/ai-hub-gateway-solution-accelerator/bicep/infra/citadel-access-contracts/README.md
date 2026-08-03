@@ -269,10 +269,13 @@ The deployment identity needs:
 
 | Scope | Role | Purpose |
 |-------|------|---------|
-| APIM Resource Group | `API Management Service Contributor` | Create products and subscriptions |
-| Target Key Vault (if used) | `Key Vault Secrets Officer` | Write secrets |
-| Microsoft Foundry Resource Group (if used) | `Contributor` | Create connections |
-| Subscription | `Reader` | Reference existing resources |
+| Deployment subscription | `Contributor` | Run the subscription-scope deployment and manage resources in this subscription |
+| Cross-subscription APIM resource group (if used) | `Contributor` | Manage APIM resources outside the deployment subscription |
+| Cross-subscription Key Vault resource group (if used) | `Contributor` | Run the nested deployment and write secrets outside the deployment subscription |
+| Target Key Vault (if used) | `Key Vault Secrets Officer` | Create and update secrets through the Key Vault data plane |
+| Cross-subscription Microsoft Foundry resource group (if used) | `Contributor` | Run the nested deployment and create connections outside the deployment subscription |
+
+See [Assign Azure permissions](#assign-azure-permissions) for scope details.
 
 ---
 
@@ -407,6 +410,162 @@ print(f"Endpoint: {endpoint}")
 ```
 
 Also you can use the [citadel-access-contracts-tests](../../../validation/citadel-access-contracts-tests.ipynb) notebook to validate end-to-end connectivity of the newly created access contract.
+
+---
+
+## GitHub Actions deployment
+
+The repository includes the **Manage AI Shared Platform Access Contracts** workflow for manually validating, previewing, and deploying one access contract at a time.
+
+The workflow:
+
+- Runs only through `workflow_dispatch`; it has no push, pull request, or scheduled trigger.
+- Selects `contracts/<contract>/<environment>/main.bicepparam`.
+- Validates the contract path before using it.
+- Compiles the Bicep template and parameter file.
+- Runs `az deployment sub validate` before every operation.
+- Runs either `az deployment sub what-if` or `az deployment sub create`.
+- Suppresses deployment output during deploys so APIM subscription keys are not written to GitHub logs.
+
+### Configure GitHub Environments
+
+Create a GitHub Environment for each deployed environment, such as `dev`, `test`, and `prod`. Add:
+
+| Type | Name | Purpose |
+| --- | --- | --- |
+| Secret | `AZURE_CREDENTIALS` | Service principal credentials used by `azure/login` |
+| Variable | `AZURE_DEPLOYMENT_LOCATION` | Azure region that stores subscription deployment metadata, such as `swedencentral` |
+
+Use required reviewers and deployment branch restrictions on production environments.
+
+`AZURE_CREDENTIALS` must contain:
+
+```json
+{
+  "clientId": "<application-client-id>",
+  "clientSecret": "<client-secret>",
+  "subscriptionId": "<deployment-subscription-id>",
+  "tenantId": "<tenant-id>"
+}
+```
+
+### Run the workflow
+
+1. Open **Actions** in GitHub.
+2. Select **Manage AI Shared Platform Access Contracts**.
+3. Select **Run workflow**.
+4. Enter the contract folder name, for example `sales-assistant`.
+5. Select the environment containing the contract parameter file.
+6. Select:
+   - `what-if` to validate and preview changes.
+   - `deploy` to validate and apply changes.
+
+The workflow intentionally does not delete contracts. Bicep deployments use incremental mode, so removing a contract file from the repository does not delete its Azure resources.
+
+> **Important:** When `useTargetAzureKeyVault=false`, the Azure deployment resource can retain generated APIM subscription keys in its outputs. The workflow does not print those outputs, but production contracts should use Key Vault whenever possible.
+
+### Create the service principal
+
+Client-secret authentication stores a long-lived credential in GitHub. GitHub OIDC federation is more secure because it uses short-lived tokens, but the following setup supports the client-secret service principal used by this workflow.
+
+Run these commands as an identity allowed to create app registrations and Azure role assignments:
+
+```powershell
+az login
+
+$subscriptionId = "<subscription-id>"
+$appName = "github-ai-shared-plat-access-contracts"
+
+az account set --subscription $subscriptionId
+
+$sp = az ad sp create-for-rbac `
+  --name $appName `
+  --years 1 `
+  --output json | ConvertFrom-Json
+
+$clientId = $sp.appId
+$clientSecret = $sp.password
+$tenantId = $sp.tenant
+$objectId = az ad sp show --id $clientId --query id --output tsv
+```
+
+Create the `AZURE_CREDENTIALS` value without committing it:
+
+```powershell
+$credentials = @{
+  clientId       = $clientId
+  clientSecret   = $clientSecret
+  subscriptionId = $subscriptionId
+  tenantId       = $tenantId
+} | ConvertTo-Json
+
+$credentials
+```
+
+Copy the resulting JSON directly into the GitHub Environment secret. The client secret is shown only when it is created. Rotate it before expiration and update every environment that uses it.
+
+### Assign Azure permissions
+
+Assign the service principal the **Contributor** role at these scopes:
+
+1. **The deployment subscription** configured in `AZURE_CREDENTIALS`.
+2. **Each target resource group in another subscription**, if the contract references APIM, Key Vault, or Foundry outside the deployment subscription.
+3. **Key Vault Secrets Officer on the target vault** when `useTargetAzureKeyVault=true`.
+
+The subscription assignment is currently required because `main.bicep` uses `targetScope = 'subscription'` and the workflow runs `az deployment sub validate`, `what-if`, and `create`. Contributor assignments only on the target resource groups are not sufficient for that root deployment.
+
+Contributor on the deployment subscription already applies to every resource group in that subscription. Do not add duplicate resource-group assignments for resources in the same subscription.
+
+Contributor does not grant Key Vault secret data-plane access. The separate Key Vault Secrets Officer assignment is required even when the service principal is Contributor on the vault's subscription or resource group.
+
+Example assignments:
+
+```powershell
+az role assignment create `
+  --assignee-object-id $objectId `
+  --assignee-principal-type ServicePrincipal `
+  --role Contributor `
+  --scope "/subscriptions/$subscriptionId"
+
+# Only when APIM is in another subscription
+az role assignment create `
+  --assignee-object-id $objectId `
+  --assignee-principal-type ServicePrincipal `
+  --role Contributor `
+  --scope "/subscriptions/<apim-subscription-id>/resourceGroups/<apim-resource-group>"
+
+# Only when Key Vault is enabled and is in another subscription
+az role assignment create `
+  --assignee-object-id $objectId `
+  --assignee-principal-type ServicePrincipal `
+  --role Contributor `
+  --scope "/subscriptions/<key-vault-subscription-id>/resourceGroups/<key-vault-resource-group>"
+
+# Required whenever Key Vault integration is enabled
+$keyVaultId = az keyvault show `
+  --subscription "<key-vault-subscription-id>" `
+  --resource-group "<key-vault-resource-group>" `
+  --name "<key-vault-name>" `
+  --query id `
+  --output tsv
+
+az role assignment create `
+  --assignee-object-id $objectId `
+  --assignee-principal-type ServicePrincipal `
+  --role "Key Vault Secrets Officer" `
+  --scope $keyVaultId
+
+# Only when Foundry is enabled and is in another subscription
+az role assignment create `
+  --assignee-object-id $objectId `
+  --assignee-principal-type ServicePrincipal `
+  --role Contributor `
+  --scope "/subscriptions/<foundry-subscription-id>/resourceGroups/<foundry-resource-group>"
+```
+
+To remove the subscription-level Contributor assignment entirely, the access-contract template and workflow must first be changed from subscription-scope to resource-group-scope deployment.
+
+The Key Vault Secrets Officer role assumes the vault uses Azure RBAC. If it uses legacy access policies, grant the service principal permission to set secrets through a vault access policy instead.
 
 ---
 

@@ -1,0 +1,179 @@
+name: Manage AI Shared Platform Access Contracts
+
+on:
+  workflow_dispatch:
+    inputs:
+      contract:
+        description: 'Contract folder name, for example sales-assistant'
+        required: true
+        type: string
+      environment:
+        description: 'Contract environment and GitHub Environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
+      action:
+        description: 'Operation to perform'
+        required: true
+        default: 'what-if'
+        type: choice
+        options:
+          - what-if
+          - deploy
+
+permissions:
+  contents: read
+
+concurrency:
+  group: access-contract-${{ inputs.contract }}-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  ACCESS_CONTRACT_ROOT: solutions/ai-shared-plat-lz/ai-hub-gateway-solution-accelerator/bicep/infra/citadel-access-contracts
+
+jobs:
+  manage:
+    name: ${{ inputs.action }} ${{ inputs.contract }} (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate workflow inputs
+        id: inputs
+        shell: bash
+        env:
+          CONTRACT_INPUT: ${{ inputs.contract }}
+          ENVIRONMENT_INPUT: ${{ inputs.environment }}
+          DEPLOYMENT_LOCATION: ${{ vars.AZURE_DEPLOYMENT_LOCATION }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$CONTRACT_INPUT" =~ ^[a-z0-9][a-z0-9-]*$ ]] || (( ${#CONTRACT_INPUT} > 30 )); then
+            echo "::error::Contract must be 1-30 lowercase letters, numbers, or hyphens."
+            exit 1
+          fi
+
+          if [[ ! "$ENVIRONMENT_INPUT" =~ ^(dev|test|prod)$ ]]; then
+            echo "::error::Unsupported environment: $ENVIRONMENT_INPUT"
+            exit 1
+          fi
+
+          if [[ -z "$DEPLOYMENT_LOCATION" ]]; then
+            echo "::error::Set AZURE_DEPLOYMENT_LOCATION in the selected GitHub Environment."
+            exit 1
+          fi
+
+          contracts_root="$(realpath "$ACCESS_CONTRACT_ROOT/contracts")"
+          parameter_file="$ACCESS_CONTRACT_ROOT/contracts/$CONTRACT_INPUT/$ENVIRONMENT_INPUT/main.bicepparam"
+
+          if [[ ! -f "$parameter_file" ]]; then
+            echo "::error::Parameter file not found: $parameter_file"
+            exit 1
+          fi
+
+          parameter_file_real="$(realpath "$parameter_file")"
+          if [[ "$parameter_file_real" != "$contracts_root/"* ]]; then
+            echo "::error::Resolved parameter file is outside the contracts directory."
+            exit 1
+          fi
+
+          deployment_name="access-${CONTRACT_INPUT}-${ENVIRONMENT_INPUT}-${GITHUB_RUN_ID}"
+          echo "parameter_file=$parameter_file" >> "$GITHUB_OUTPUT"
+          echo "deployment_name=$deployment_name" >> "$GITHUB_OUTPUT"
+
+      - name: Azure login
+        uses: azure/login@v3
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Compile Bicep
+        shell: bash
+        env:
+          PARAMETER_FILE: ${{ steps.inputs.outputs.parameter_file }}
+        run: |
+          set -euo pipefail
+          az bicep build \
+            --file "$ACCESS_CONTRACT_ROOT/main.bicep" \
+            --stdout \
+            --only-show-errors > /dev/null
+          az bicep build-params \
+            --file "$PARAMETER_FILE" \
+            --stdout \
+            --only-show-errors > /dev/null
+
+      - name: Validate Azure deployment
+        shell: bash
+        env:
+          PARAMETER_FILE: ${{ steps.inputs.outputs.parameter_file }}
+          DEPLOYMENT_NAME: ${{ steps.inputs.outputs.deployment_name }}
+          DEPLOYMENT_LOCATION: ${{ vars.AZURE_DEPLOYMENT_LOCATION }}
+        run: |
+          set -euo pipefail
+          az deployment sub validate \
+            --name "$DEPLOYMENT_NAME" \
+            --location "$DEPLOYMENT_LOCATION" \
+            --template-file "$ACCESS_CONTRACT_ROOT/main.bicep" \
+            --parameters "$PARAMETER_FILE" \
+            --only-show-errors \
+            --output none
+
+      - name: Preview deployment
+        if: inputs.action == 'what-if'
+        shell: bash
+        env:
+          PARAMETER_FILE: ${{ steps.inputs.outputs.parameter_file }}
+          DEPLOYMENT_NAME: ${{ steps.inputs.outputs.deployment_name }}
+          DEPLOYMENT_LOCATION: ${{ vars.AZURE_DEPLOYMENT_LOCATION }}
+        run: |
+          set -euo pipefail
+          az deployment sub what-if \
+            --name "$DEPLOYMENT_NAME" \
+            --location "$DEPLOYMENT_LOCATION" \
+            --template-file "$ACCESS_CONTRACT_ROOT/main.bicep" \
+            --parameters "$PARAMETER_FILE" \
+            --only-show-errors
+
+      - name: Deploy access contract
+        if: inputs.action == 'deploy'
+        shell: bash
+        env:
+          PARAMETER_FILE: ${{ steps.inputs.outputs.parameter_file }}
+          DEPLOYMENT_NAME: ${{ steps.inputs.outputs.deployment_name }}
+          DEPLOYMENT_LOCATION: ${{ vars.AZURE_DEPLOYMENT_LOCATION }}
+        run: |
+          set -euo pipefail
+          az deployment sub create \
+            --name "$DEPLOYMENT_NAME" \
+            --location "$DEPLOYMENT_LOCATION" \
+            --template-file "$ACCESS_CONTRACT_ROOT/main.bicep" \
+            --parameters "$PARAMETER_FILE" \
+            --only-show-errors \
+            --output none
+
+      - name: Write job summary
+        if: success()
+        shell: bash
+        env:
+          CONTRACT_INPUT: ${{ inputs.contract }}
+          ENVIRONMENT_INPUT: ${{ inputs.environment }}
+          ACTION_INPUT: ${{ inputs.action }}
+          DEPLOYMENT_NAME: ${{ steps.inputs.outputs.deployment_name }}
+        run: |
+          {
+            echo "## Access contract operation"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Contract | \`$CONTRACT_INPUT\` |"
+            echo "| Environment | \`$ENVIRONMENT_INPUT\` |"
+            echo "| Action | \`$ACTION_INPUT\` |"
+            echo "| Deployment | \`$DEPLOYMENT_NAME\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
