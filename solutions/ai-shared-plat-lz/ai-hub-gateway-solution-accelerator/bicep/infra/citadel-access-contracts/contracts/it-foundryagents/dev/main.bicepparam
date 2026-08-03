@@ -5,9 +5,9 @@ using '../../../main.bicep'
 // ============================================================================
 
 param apim = {
-  subscriptionId: 'REPLACE'
-  resourceGroupName: 'REPLACE'
-  name: 'REPLACE'
+  subscriptionId: 'dcbc1e3b-d166-4453-8a07-5c6dd0e2b511'
+  resourceGroupName: 'rg-ai-plat-lz-dev'
+  name: 'apim-rfp01oswxbuiwdms54'
 }
 
 param keyVault = {
@@ -43,16 +43,16 @@ param productTerms = 'Access Contract created from testing notebook - Foundry Ag
 param useTargetFoundry = true
 
 param foundry = {
-  subscriptionId: 'REPLACE'
-  resourceGroupName: 'REPLACE'
-  accountName: 'REPLACE'
-  projectName: 'REPLACE'
+  subscriptionId: 'dcbc1e3b-d166-4453-8a07-5c6dd0e2b511'
+  resourceGroupName: 'rg-ai-app-lz-dev'
+  accountName: 'foundry-agentsvfgg'
+  projectName: 'prj-foundry-agentsvfgg'
 }
 
 param foundryConfig = {
   connectionNamePrefix: ''
   deploymentInPath: 'false'
-  isSharedToAll: false
+  isSharedToAll: true
   inferenceAPIVersion: ''
   deploymentAPIVersion: ''
   staticModels: []
