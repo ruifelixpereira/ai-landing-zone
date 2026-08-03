@@ -429,7 +429,7 @@ The workflow:
 
 ### Configure GitHub Environments
 
-Create a GitHub Environment for each deployed environment, such as `dev`, `test`, and `prod`. Add:
+Create a GitHub Environment for each deployed environment, such as `dev`, `test`, `uat`, or `prod`. The workflow environment input is free text and must match both the GitHub Environment name and the contract environment folder. Add:
 
 | Type | Name | Purpose |
 | --- | --- | --- |
@@ -455,7 +455,7 @@ Use required reviewers and deployment branch restrictions on production environm
 2. Select **Manage AI Shared Platform Access Contracts**.
 3. Select **Run workflow**.
 4. Enter the contract folder name, for example `sales-assistant`.
-5. Select the environment containing the contract parameter file.
+5. Enter the environment containing the contract parameter file. For example, `uat` selects `contracts/<contract>/uat/main.bicepparam` and the `uat` GitHub Environment.
 6. Select:
    - `what-if` to validate and preview changes.
    - `deploy` to validate and apply changes.

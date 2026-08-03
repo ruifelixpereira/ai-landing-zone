@@ -11,11 +11,7 @@ on:
         description: 'Contract environment and GitHub Environment'
         required: true
         default: 'dev'
-        type: choice
-        options:
-          - dev
-          - test
-          - prod
+        type: string
       action:
         description: 'Operation to perform'
         required: true
@@ -61,8 +57,8 @@ jobs:
             exit 1
           fi
 
-          if [[ ! "$ENVIRONMENT_INPUT" =~ ^(dev|test|prod)$ ]]; then
-            echo "::error::Unsupported environment: $ENVIRONMENT_INPUT"
+          if [[ ! "$ENVIRONMENT_INPUT" =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]] || (( ${#ENVIRONMENT_INPUT} > 30 )); then
+            echo "::error::Environment must be 1-30 letters, numbers, underscores, or hyphens."
             exit 1
           fi
 
