@@ -15,7 +15,7 @@
         <set-variable name="allowedModels" value="gpt-4.1,gpt-5.4,gpt-5.4-mini,text-embedding-3-large,gpt-4.1-mini" />
 
         <!-- Capacity management - Subscription Level: allow only assigned tpm for each HR use case subscription -->
-        <llm-token-limit counter-key="@(context.Subscription.Id)" tokens-per-minute="5000" estimate-prompt-tokens="false" token-quota="100000" token-quota-period="Monthly" />
+        <llm-token-limit counter-key="@(context.Subscription.Id)" tokens-per-minute="10000" estimate-prompt-tokens="false" token-quota="100000" token-quota-period="Monthly" />
 
         <!-- Enable advanced response headers offered by set-response-headers fragment -->
         <set-variable name="enableResponseHeaders" value="@(true)" />
